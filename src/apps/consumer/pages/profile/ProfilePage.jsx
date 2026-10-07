@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowUpRight, Bookmark, Check, MapPin, Plus, Share2, Wallet } from 'lucide-react'
+import { ArrowUpRight, Bookmark, Check, LogOut, MapPin, Phone, Plus, Share2, Wallet } from 'lucide-react'
 import { Card } from '@/shared/ui/Card'
 import { Badge } from '@/shared/ui/Badge'
 import { Button } from '@/shared/ui/Button'
@@ -8,12 +8,14 @@ import { Avatar } from '@/shared/ui/Avatar'
 import { Dialog } from '@/shared/ui/Dialog'
 import { calculateDropTier } from '@/features/drops/model/dropStatuses'
 import { useDropInterests } from '@/features/drops/model/useDropInterest'
+import { useAuth } from '@/features/auth/model/authContext'
 import { formatCurrency } from '@/shared/lib/formatCurrency'
 import { MOCK_DROPS } from '../mockCatalog'
 
 export default function ProfilePage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
+  const { user, isAuthenticated, logout } = useAuth()
   const [activeTab, setActiveTab] = useState('picks')
   const [shareMessage, setShareMessage] = useState('')
   const [withdrawOpen, setWithdrawOpen] = useState(false)
@@ -22,9 +24,26 @@ export default function ProfilePage() {
   const isNabila = publicHandle === 'nabila_edits'
   const drops = useDropInterests(MOCK_DROPS)
   const picks = isPublicProfile ? drops.filter((drop) => drop.curator.handle === publicHandle) : drops
-  const curator = isNabila
+
+  const defaultCurator = isNabila
     ? { name: 'Nabila Rahman', handle: '@nabila_edits', bio: 'Tech finds and everyday essentials for an easier setup.' }
     : { name: 'Fahim Ahmed', handle: '@fahim_vibes', walletBalance: 1850, bio: 'Tech enthusiast and streetwear lover. A shelf of good finds, with honest notes for my circle.' }
+
+  const curator = (!isPublicProfile && user)
+    ? {
+        name: user.name || defaultCurator.name,
+        handle: user.username ? `@${user.username}` : defaultCurator.handle,
+        phone: user.phone,
+        walletBalance: user.wallet_balance || defaultCurator.walletBalance,
+        bio: user.profile?.bio || defaultCurator.bio,
+      }
+    : defaultCurator
+
+  const handleLogout = async () => {
+    await logout()
+    navigate('/login')
+  }
+
   const shareProfile = async () => {
     try {
       await navigator.clipboard.writeText(window.location.origin + '/profile?person=' + curator.handle.slice(1))
@@ -43,18 +62,53 @@ export default function ProfilePage() {
       <Card className="overflow-hidden">
         <div className="relative h-24 border-b border-line bg-elevated sm:h-32">
           <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-brand/10 to-transparent" />
-          <span className="absolute right-4 top-4"><Badge>Preview profile</Badge></span>
+          <span className="absolute right-4 top-4">
+            <Badge>{isPublicProfile ? 'Community Profile' : (isAuthenticated ? 'Active Member' : 'Guest')}</Badge>
+          </span>
         </div>
         <div className="px-5 pb-6 sm:px-7">
           <div className="-mt-8 flex items-end justify-between gap-3">
             <Avatar name={curator.name} size="xl" className="relative ring-4 ring-surface" />
-            <button onClick={shareProfile} aria-label="Copy profile link" className="flex h-11 w-11 items-center justify-center rounded-xl border border-line text-soft hover:bg-elevated">
-              <Share2 size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={shareProfile}
+                aria-label="Copy profile link"
+                className="flex h-11 w-11 items-center justify-center rounded-xl border border-line text-soft hover:bg-elevated cursor-pointer"
+              >
+                <Share2 size={18} />
+              </button>
+              {isAuthenticated && !isPublicProfile && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 font-medium"
+                >
+                  <LogOut size={16} />
+                  <span>Log Out</span>
+                </Button>
+              )}
+              {!isAuthenticated && !isPublicProfile && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/login')}
+                  className="flex items-center gap-1.5 text-brand"
+                >
+                  <span>Log In</span>
+                </Button>
+              )}
+            </div>
           </div>
           <div className="mt-4">
             <h1 className="text-2xl font-semibold tracking-tight text-ink">{curator.name}</h1>
             <p className="mt-1 text-sm text-muted">{curator.handle}</p>
+            {curator.phone && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted font-mono">
+                <Phone size={13} className="text-slate-400" />
+                <span>{curator.phone}</span>
+              </p>
+            )}
             <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-soft">{curator.bio}</p>
             <p className="mt-3 flex items-center gap-1.5 text-xs text-muted"><MapPin size={14} /> Jashore, Bangladesh</p>
           </div>
