@@ -1,33 +1,46 @@
+@theme {
+  --color-canvas: #0d1117;
+  --color-surface: #151a23;
+  --color-elevated: #1d2530;
+  --color-line: #2b3645;
+  --color-field-border: #5d6d83;
+  --color-ink: #f4f6fa;
+  --color-soft: #c6ceda;
+  --color-muted: #a3adbd;
+  --color-brand: #ff7a45;
+  --color-brand-soft: #2c211e;
+  --color-on-brand: #151a23;
+  --color-success: #51d6a3;
+  --color-success-soft: #142d28;
+  --color-warning: #f5c451;
+  --color-warning-soft: #302a1d;
+  --color-danger: #ff7c87;
+  --color-danger-soft: #321f2a;
+  --color-info: #82b1ff;
+  --color-info-soft: #1d2b40;
+}
+
 :root {
-  /* Brand & Drop Identity */
-  --color-brand: #ff4d00;
-  --color-brand-hover: #e04400;
-  --color-brand-light: #fff2ed;
-  --color-drop-fire: #ff3b30;
-  --color-unlocked: #10b981;
-  --color-unlocked-bg: #ecfdf5;
-
-  /* Neutrals & Surfaces */
-  --color-surface-base: #ffffff;
-  --color-surface-subtle: #f8fafc;
-  --color-surface-muted: #f1f5f9;
-  --color-border-subtle: #e2e8f0;
-  --color-border-strong: #cbd5e1;
-
-  /* Typography */
-  --color-text-main: #0f172a;
-  --color-text-muted: #64748b;
-  --color-text-subtle: #94a3b8;
-
-  /* Admin Surfaces */
-  --color-admin-sidebar: #0f172a;
-  --color-admin-sidebar-hover: #1e293b;
-  --color-admin-sidebar-text: #94a3b8;
-  --color-admin-sidebar-active: #ffffff;
-
-  /* Layout dimensions */
-  --consumer-bottom-nav-height: 4rem;
-  --consumer-header-height: 3.5rem;
+  color-scheme: dark;
+  --color-brand-hover: #ff956b;
+  --color-brand-light: var(--color-brand-soft);
+  --color-drop-fire: var(--color-brand);
+  --color-unlocked: var(--color-success);
+  --color-unlocked-bg: var(--color-success-soft);
+  --color-surface-base: var(--color-surface);
+  --color-surface-subtle: var(--color-canvas);
+  --color-surface-muted: var(--color-elevated);
+  --color-border-subtle: var(--color-line);
+  --color-border-strong: var(--color-field-border);
+  --color-text-main: var(--color-ink);
+  --color-text-muted: var(--color-soft);
+  --color-text-subtle: var(--color-muted);
+  --color-admin-sidebar: var(--color-surface);
+  --color-admin-sidebar-hover: var(--color-elevated);
+  --color-admin-sidebar-text: var(--color-muted);
+  --color-admin-sidebar-active: var(--color-ink);
+  --consumer-bottom-nav-height: 4.5rem;
+  --consumer-header-height: 4rem;
   --admin-sidebar-width: 16rem;
   --admin-header-height: 4rem;
 }

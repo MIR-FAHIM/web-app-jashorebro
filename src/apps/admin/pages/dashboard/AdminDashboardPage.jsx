@@ -1,153 +1,39 @@
-import React from 'react'
-import { Flame, Users, ShoppingBag, DollarSign, TrendingUp, ArrowUpRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Flame, Users, ShoppingBag, DollarSign, ArrowRight, Clock, Plus } from 'lucide-react'
 import { Card } from '@/shared/ui/Card'
 import { Badge } from '@/shared/ui/Badge'
 import { Button } from '@/shared/ui/Button'
 import { formatCurrency } from '@/shared/lib/formatCurrency'
 
+const stats = [
+  { title: 'Active Drops', value: '14', note: '3 added this week', icon: Flame, tone: 'text-brand bg-brand-soft' },
+  { title: 'Community members', value: '842', note: '128 joined this month', icon: Users, tone: 'text-info bg-info-soft' },
+  { title: 'Order value', value: formatCurrency(284500), note: 'Across completed orders', icon: DollarSign, tone: 'text-success bg-success-soft' },
+  { title: 'Pending rewards', value: formatCurrency(14200), note: '42 payouts to review', icon: ShoppingBag, tone: 'text-warning bg-warning-soft' },
+]
+const campaigns = [
+  { id: 'drop_1', title: 'Vintage Oversized Corduroy Hoodie', category: 'Streetwear', seller: 'TrendFabric BD', participants: 18, target: 25, price: 1099, next: 999 },
+  { id: 'drop_2', title: 'Havit H2002D RGB Gaming Headset', category: 'Tech & gadgets', seller: 'GadgetZone Jashore', participants: 28, target: 30, price: 2350, next: 2099 },
+]
+
 export default function AdminDashboardPage() {
-  const stats = [
-    {
-      title: 'Active Drops',
-      value: '14',
-      change: '+3 today',
-      icon: Flame,
-      color: 'text-orange-600 bg-orange-50',
-    },
-    {
-      title: 'Active Rallyers',
-      value: '842',
-      change: '+18% this week',
-      icon: Users,
-      color: 'text-blue-600 bg-blue-50',
-    },
-    {
-      title: 'Aggregated GMV',
-      value: formatCurrency(284500),
-      change: '+24% vs last month',
-      icon: DollarSign,
-      color: 'text-emerald-600 bg-emerald-50',
-    },
-    {
-      title: 'Curator Payouts',
-      value: formatCurrency(14200),
-      change: '42 pending payouts',
-      icon: ShoppingBag,
-      color: 'text-purple-600 bg-purple-50',
-    },
-  ]
-
-  const activeDropCampaigns = [
-    {
-      id: 'drop_1',
-      title: 'Vintage Oversized Corduroy Hoodie',
-      category: 'Streetwear',
-      seller: 'TrendFabric BD',
-      participants: 18,
-      targetTier: 'Tier 3 (25 bros)',
-      currentPrice: 999,
-      status: 'rallying',
-    },
-    {
-      id: 'drop_2',
-      title: 'Havit H2002D RGB Gaming Headset',
-      category: 'Tech & Gadgets',
-      seller: 'GadgetZone Jashore',
-      participants: 28,
-      targetTier: 'Tier 3 (30 bros)',
-      currentPrice: 2099,
-      status: 'almost_unlocked',
-    },
-  ]
-
+  const navigate = useNavigate()
   return (
-    <div className="space-y-6">
-      {/* Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
-            Platform Command Center
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Real-time overview of community drops, collective demand, and curator attribution.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="drop-fire" size="sm">
-            + Create New Drop Campaign
-          </Button>
-        </div>
+    <div className="space-y-7">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand">Community commerce</p><h1 className="text-3xl font-bold tracking-tight text-ink">Overview</h1><p className="mt-2 text-sm text-muted">A clear view of your Drops, orders, and people.</p></div>
+        <Button onClick={() => navigate('/admin/drops')}><Plus size={18} /> Manage Drops</Button>
       </div>
-
-      {/* Metric Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        {stats.map(({ title, value, change, icon: Icon, color }) => (
-          <Card key={title} className="p-4 flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">{title}</span>
-              <div className={`p-2 rounded-xl ${color}`}>
-                <Icon size={18} />
-              </div>
-            </div>
-            <div className="mt-3">
-              <span className="text-xl md:text-2xl font-black text-slate-900 block">{value}</span>
-              <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-0.5 mt-0.5">
-                <TrendingUp size={11} /> {change}
-              </span>
-            </div>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 xl:grid-cols-4">
+        {stats.map(({ title, value, note, icon: Icon, tone }) => <Card key={title} className="p-5"><div className="flex items-center justify-between gap-2"><span className="text-sm text-muted">{title}</span><span className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tone}`}><Icon size={19} /></span></div><p className="mt-5 text-2xl font-bold tracking-tight text-ink">{value}</p><p className="mt-2 text-xs text-muted">{note}</p></Card>)}
       </div>
-
-      {/* Live Drops Tracking Table */}
-      <Card className="overflow-hidden">
-        <div className="p-4 md:p-5 border-b border-slate-100 flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900">Active High-Velocity Drops</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Real-time group buying rallies across Jashore.</p>
-          </div>
-          <Button variant="outline" size="sm" className="text-xs">
-            View All Drops
-          </Button>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-100">
-              <tr>
-                <th className="py-3 px-4">Drop Item</th>
-                <th className="py-3 px-4">Merchant</th>
-                <th className="py-3 px-4">Participants</th>
-                <th className="py-3 px-4">Current Price</th>
-                <th className="py-3 px-4">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-medium">
-              {activeDropCampaigns.map((d) => (
-                <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3 px-4">
-                    <span className="font-bold text-slate-900 block">{d.title}</span>
-                    <span className="text-slate-400 text-[11px]">{d.category}</span>
-                  </td>
-                  <td className="py-3 px-4 text-slate-600">{d.seller}</td>
-                  <td className="py-3 px-4">
-                    <span className="font-bold text-orange-600">🔥 {d.participants} in</span>
-                    <span className="text-slate-400 block text-[10px]">{d.targetTier}</span>
-                  </td>
-                  <td className="py-3 px-4 font-bold text-slate-900">
-                    {formatCurrency(d.currentPrice)}
-                  </td>
-                  <td className="py-3 px-4">
-                    <Badge variant={d.status === 'almost_unlocked' ? 'unlocked' : 'fire'} size="sm">
-                      {d.status === 'almost_unlocked' ? '93% Unlocked' : 'Active Rally'}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      <div className="grid gap-5 xl:grid-cols-[1fr_280px]">
+        <Card className="min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-5"><div><h2 className="text-lg font-semibold text-ink">Active Drops</h2><p className="mt-1 text-sm text-muted">Progress toward the next price milestone.</p></div><Button variant="ghost" onClick={() => navigate('/admin/drops')}>View all <ArrowRight size={16} /></Button></div>
+          <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left text-sm"><thead className="bg-elevated/50 text-xs text-muted"><tr>{['Product', 'Community', 'Current price', 'Next milestone'].map((label) => <th key={label} scope="col" className="px-5 py-4 font-medium">{label}</th>)}</tr></thead><tbody className="divide-y divide-line">{campaigns.map((drop) => <tr key={drop.id} className="hover:bg-elevated/40"><td className="max-w-[240px] px-5 py-5"><p className="font-medium text-ink">{drop.title}</p><p className="mt-1 text-xs text-muted">{drop.seller}</p></td><td className="px-5 py-5"><p className="text-soft">{drop.participants} joined</p><div className="mt-2 h-1 w-24 rounded-full bg-line"><div className="h-full rounded-full bg-brand" style={{ width: `${drop.participants / drop.target * 100}%` }} /></div></td><td className="px-5 py-5 font-semibold text-ink">{formatCurrency(drop.price)}</td><td className="px-5 py-5"><Badge variant="brand">{formatCurrency(drop.next)} at {drop.target}</Badge><p className="mt-2 text-xs text-muted">{drop.target - drop.participants} more to go</p></td></tr>)}</tbody></table></div>
+        </Card>
+        <Card className="p-5"><span className="mb-4 flex size-10 items-center justify-center rounded-xl bg-warning-soft text-warning"><Clock size={20} /></span><h2 className="text-lg font-semibold text-ink">Needs your attention</h2><p className="mt-2 text-sm leading-relaxed text-muted">Review pending rewards and community reports.</p><div className="mt-5 space-y-2"><button onClick={() => navigate('/admin/rewards')} className="flex min-h-12 w-full items-center justify-between rounded-xl bg-elevated px-3 text-sm text-soft">Reward payouts <ArrowRight size={17} /></button><button onClick={() => navigate('/admin/moderation')} className="flex min-h-12 w-full items-center justify-between rounded-xl bg-elevated px-3 text-sm text-soft">Moderation queue <ArrowRight size={17} /></button></div><p className="mt-6 border-t border-line pt-4 text-xs text-muted">Sample data for UI review. Connect the API to show current platform activity.</p></Card>
+      </div>
     </div>
   )
 }

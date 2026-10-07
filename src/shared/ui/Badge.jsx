@@ -1,13 +1,14 @@
-import React from 'react'
 import { cn } from '../lib/cn'
 
 const badgeVariants = {
-  default: 'bg-slate-100 text-slate-800',
-  fire: 'bg-red-50 text-red-600 border border-red-200/60 font-semibold',
-  unlocked: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-semibold',
-  brand: 'bg-[var(--color-brand-light)] text-[var(--color-brand)] font-semibold',
-  warning: 'bg-amber-50 text-amber-700 border border-amber-200/60',
-  outline: 'border border-slate-200 text-slate-600',
+  default: 'bg-elevated text-soft',
+  fire: 'bg-brand-soft text-brand border border-brand/20',
+  unlocked: 'bg-success-soft text-success border border-success/20',
+  brand: 'bg-brand-soft text-brand',
+  warning: 'bg-warning-soft text-warning border border-warning/20',
+  outline: 'border border-line text-muted',
+  danger: 'bg-danger-soft text-danger border border-danger/20',
+  info: 'bg-info-soft text-info',
 }
 
 export function Badge({

@@ -1,4 +1,4 @@
-import React from 'react'
+import { useId } from 'react'
 import { cn } from '../lib/cn'
 
 export function Input({
@@ -8,25 +8,29 @@ export function Input({
   id,
   ...props
 }) {
-  const inputId = id || props.name
+  const generatedId = useId()
+  const inputId = id || props.name || generatedId
+  const errorId = `${inputId}-error`
 
   return (
     <div className="w-full flex flex-col gap-1.5">
       {label && (
-        <label htmlFor={inputId} className="text-xs font-semibold text-slate-700">
+        <label htmlFor={inputId} className="text-sm font-medium text-soft">
           {label}
         </label>
       )}
       <input
         id={inputId}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errorId : undefined}
         className={cn(
-          'w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/20 focus:border-[var(--color-brand)] transition-colors disabled:bg-slate-50 disabled:text-slate-400',
-          error && 'border-red-500 focus:ring-red-500/20 focus:border-red-500',
+          'w-full min-h-12 px-3.5 py-2.5 text-base bg-elevated border border-field-border rounded-xl text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors disabled:opacity-50',
+          error && 'border-danger focus:ring-danger/30 focus:border-danger',
           className
         )}
         {...props}
       />
-      {error && <span className="text-xs text-red-500 font-medium">{error}</span>}
+      {error && <span id={errorId} className="text-sm text-danger">{error}</span>}
     </div>
   )
 }

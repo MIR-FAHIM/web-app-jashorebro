@@ -18,4 +18,9 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    // Route configuration modules intentionally export JSX route trees.
+    files: ['src/apps/*/routes.jsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 ])

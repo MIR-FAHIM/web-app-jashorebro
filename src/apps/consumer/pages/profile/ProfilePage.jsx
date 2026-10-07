@@ -1,178 +1,127 @@
-import React, { useState } from 'react'
-import { Award, Sparkles, TrendingUp, Wallet, Share2, Plus } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { ArrowUpRight, Bookmark, Check, MapPin, Plus, Share2, Wallet } from 'lucide-react'
 import { Card } from '@/shared/ui/Card'
 import { Badge } from '@/shared/ui/Badge'
 import { Button } from '@/shared/ui/Button'
 import { Avatar } from '@/shared/ui/Avatar'
+import { Dialog } from '@/shared/ui/Dialog'
+import { calculateDropTier } from '@/features/drops/model/dropStatuses'
+import { useDropInterests } from '@/features/drops/model/useDropInterest'
 import { formatCurrency } from '@/shared/lib/formatCurrency'
-
-const MOCK_PICKS = [
-  {
-    id: 'pick_1',
-    title: 'Vintage Oversized Corduroy Hoodie',
-    price: 999,
-    note: 'Runs slightly large, order true to size for comfortable relaxed drape.',
-    influencedBuys: 18,
-    image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    id: 'pick_2',
-    title: 'Havit H2002D RGB Gaming Headset',
-    price: 2099,
-    note: 'Mic is surprisingly clean for Discord calls and gaming on budget.',
-    influencedBuys: 24,
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80',
-  },
-]
+import { MOCK_DROPS } from '../mockCatalog'
 
 export default function ProfilePage() {
-  const [activeTab, setActiveTab] = useState('picks') // 'picks' | 'rewards'
+  const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const [activeTab, setActiveTab] = useState('picks')
+  const [shareMessage, setShareMessage] = useState('')
+  const [withdrawOpen, setWithdrawOpen] = useState(false)
+  const publicHandle = params.get('person')
+  const isPublicProfile = Boolean(publicHandle)
+  const isNabila = publicHandle === 'nabila_edits'
+  const drops = useDropInterests(MOCK_DROPS)
+  const picks = isPublicProfile ? drops.filter((drop) => drop.curator.handle === publicHandle) : drops
+  const curator = isNabila
+    ? { name: 'Nabila Rahman', handle: '@nabila_edits', bio: 'Tech finds and everyday essentials for an easier setup.' }
+    : { name: 'Fahim Ahmed', handle: '@fahim_vibes', walletBalance: 1850, bio: 'Tech enthusiast and streetwear lover. A shelf of good finds, with honest notes for my circle.' }
+  const shareProfile = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.origin + '/profile?person=' + curator.handle.slice(1))
+      setShareMessage('Profile link copied')
+    } catch {
+      setShareMessage('Copy the page address to share this profile.')
+    }
+  }
 
-  const curator = {
-    name: 'Fahim Ahmed',
-    handle: '@fahim_vibes',
-    location: 'Jashore, Bangladesh',
-    tasteScore: '4.9',
-    totalInfluencedSales: 42,
-    walletBalance: 1850,
-    bio: 'Tech enthusiast & streetwear lover. Curating honest picks that I personally test and recommend.',
+  if (isPublicProfile && !['fahim_vibes', 'nabila_edits'].includes(publicHandle)) {
+    return <Card className="mx-auto max-w-lg p-8 text-center"><h1 className="text-xl font-semibold text-ink">Profile unavailable</h1><p className="my-3 text-sm text-muted">Discover another community pick in the preview feed.</p><Link to="/" className="inline-flex min-h-11 items-center text-brand">Back to Home</Link></Card>
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5">
-      {/* Profile Header Card */}
-      <Card className="p-6">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
-          <Avatar name={curator.name} size="xl" className="ring-4 ring-orange-100" />
-          <div className="flex-1 space-y-1">
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <h2 className="text-xl font-black text-slate-900">{curator.name}</h2>
-              <Badge variant="fire" size="sm">
-                <Sparkles size={11} /> Trendsetter
-              </Badge>
-              <Badge variant="unlocked" size="sm">
-                Drop Catalyst
-              </Badge>
-            </div>
-            <p className="text-xs text-slate-500">{curator.handle} • {curator.location}</p>
-            <p className="text-xs text-slate-700 max-w-lg mt-2 leading-relaxed">
-              {curator.bio}
-            </p>
-          </div>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <Card className="overflow-hidden">
+        <div className="relative h-24 border-b border-line bg-elevated sm:h-32">
+          <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-brand/10 to-transparent" />
+          <span className="absolute right-4 top-4"><Badge>Preview profile</Badge></span>
         </div>
-
-        {/* Curator Credibility Bar */}
-        <div className="grid grid-cols-3 gap-2 mt-6 pt-5 border-t border-slate-100 text-center">
-          <div className="p-2 rounded-xl bg-slate-50">
-            <span className="block text-lg font-extrabold text-slate-900">
-              ⭐ {curator.tasteScore}
-            </span>
-            <span className="text-[11px] text-slate-500">Taste Score</span>
+        <div className="px-5 pb-6 sm:px-7">
+          <div className="-mt-8 flex items-end justify-between gap-3">
+            <Avatar name={curator.name} size="xl" className="relative ring-4 ring-surface" />
+            <button onClick={shareProfile} aria-label="Copy profile link" className="flex h-11 w-11 items-center justify-center rounded-xl border border-line text-soft hover:bg-elevated">
+              <Share2 size={18} />
+            </button>
           </div>
-          <div className="p-2 rounded-xl bg-slate-50">
-            <span className="block text-lg font-extrabold text-slate-900">
-              {curator.totalInfluencedSales}
-            </span>
-            <span className="text-[11px] text-slate-500">Influenced Buys</span>
+          <div className="mt-4">
+            <h1 className="text-2xl font-semibold tracking-tight text-ink">{curator.name}</h1>
+            <p className="mt-1 text-sm text-muted">{curator.handle}</p>
+            <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-soft">{curator.bio}</p>
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-muted"><MapPin size={14} /> Jashore, Bangladesh</p>
           </div>
-          <div className="p-2 rounded-xl bg-emerald-50 text-emerald-800">
-            <span className="block text-lg font-extrabold text-emerald-700">
-              {formatCurrency(curator.walletBalance)}
-            </span>
-            <span className="text-[11px] text-emerald-600 font-medium">Earned Rewards</span>
+          {shareMessage && <p role="status" className="mt-3 text-sm text-brand">{shareMessage}</p>}
+          <div className={`mt-6 grid gap-3 border-t border-line pt-5 ${isPublicProfile ? 'grid-cols-2' : 'grid-cols-3'}`}>
+            <div><p className="text-xl font-semibold text-ink">{picks.length}</p><p className="mt-1 text-xs text-muted">Curated picks</p></div>
+            <div><p className="text-xl font-semibold text-ink">{isNabila ? 24 : 42}</p><p className="mt-1 text-xs text-muted">Sample attributed buys</p></div>
+            {!isPublicProfile && <div><p className="text-xl font-semibold text-success">{formatCurrency(curator.walletBalance)}</p><p className="mt-1 text-xs text-muted">Sample rewards</p></div>}
           </div>
         </div>
       </Card>
-
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-        <button
-          onClick={() => setActiveTab('picks')}
-          className={`px-3 py-1.5 text-xs font-bold rounded-xl cursor-pointer transition-colors ${
-            activeTab === 'picks'
-              ? 'bg-slate-900 text-white'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          My Picks Shelf ({MOCK_PICKS.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('rewards')}
-          className={`px-3 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1 cursor-pointer transition-colors ${
-            activeTab === 'rewards'
-              ? 'bg-slate-900 text-white'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Wallet size={13} /> Reward Wallet
-        </button>
-      </div>
-
-      {/* My Picks Shelf Content */}
-      {activeTab === 'picks' ? (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-500">
-              Public curated shelf. Anyone buying through your shelf unlocks rewards.
-            </p>
-            <Button variant="outline" size="sm" className="text-xs">
-              <Plus size={13} /> Add Pick
-            </Button>
+      {!isPublicProfile && (
+        <div className="flex gap-2 border-b border-line pb-3">
+          {[['picks', 'My Picks', Bookmark], ['rewards', 'Rewards', Wallet]].map(([value, label, Icon]) => (
+            <button
+              key={value}
+              onClick={() => setActiveTab(value)}
+              aria-pressed={activeTab === value}
+              className={`flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-medium ${activeTab === value ? 'bg-ink text-canvas' : 'text-soft hover:bg-elevated'}`}
+            ><Icon size={16} />{label}</button>
+          ))}
+        </div>
+      )}
+      {activeTab === 'picks' || isPublicProfile ? (
+        <section className="space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div><h2 className="text-xl font-semibold text-ink">A shelf with a point of view</h2><p className="mt-1 text-sm text-muted">Good finds, collected in one place.</p></div>
+            {!isPublicProfile && <Button variant="outline" onClick={() => navigate('/explore')}><Plus size={16} /> Find a pick</Button>}
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {MOCK_PICKS.map((pick) => (
-              <Card key={pick.id} className="p-3.5 flex gap-3">
-                <img
-                  src={pick.image}
-                  alt={pick.title}
-                  className="w-20 h-20 rounded-xl object-cover bg-slate-100 shrink-0"
-                />
-                <div className="flex-1 flex flex-col justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
-                      {pick.title}
-                    </h4>
-                    <p className="text-[11px] text-slate-500 italic mt-0.5 line-clamp-2">
-                      "{pick.note}"
-                    </p>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-xs">
-                    <span className="font-extrabold text-slate-900">
-                      {formatCurrency(pick.price)}
-                    </span>
-                    <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
-                      {pick.influencedBuys} buys
-                    </span>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {picks.map((pick) => (
+              <Card key={pick.id} className="overflow-hidden">
+                <Link to={`/drops/${pick.id}`} className="block aspect-[4/3] overflow-hidden bg-elevated">
+                  <img src={pick.image} alt={pick.title} className="h-full w-full object-cover" />
+                </Link>
+                <div className="space-y-3 p-4">
+                  <p className="text-xs text-muted">{pick.category}</p>
+                  <Link to={`/drops/${pick.id}`} className="block text-base font-semibold leading-snug text-ink hover:text-brand">{pick.title}</Link>
+                  <p className="min-h-10 text-sm leading-relaxed text-muted">{pick.recommendation}</p>
+                  <div className="flex items-center justify-between gap-2 border-t border-line pt-3">
+                    <span className="text-lg font-semibold text-ink">{formatCurrency(calculateDropTier(pick.tiers, pick.currentParticipants).currentTier.price)}</span>
+                    <Link to={`/drops/${pick.id}`} className="flex min-h-11 items-center gap-1 text-sm text-brand">View Drop <ArrowUpRight size={16} /></Link>
                   </div>
                 </div>
               </Card>
             ))}
           </div>
-        </div>
+        </section>
       ) : (
-        /* Reward Wallet Section */
-        <Card className="p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs text-slate-500">Available Balance</span>
-              <h3 className="text-2xl font-black text-slate-900 mt-0.5">
-                {formatCurrency(curator.walletBalance)}
-              </h3>
-            </div>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => alert('Withdrawal request initiated (bKash/Nagad batch settlement)')}
-            >
-              Withdraw to bKash
-            </Button>
+        <Card className="space-y-5 p-5 sm:p-7">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-success-soft text-success"><Wallet size={24} /></div>
+          <div><p className="text-sm text-muted">Sample available balance</p><h2 className="mt-2 text-4xl font-semibold tracking-tight text-ink">{formatCurrency(curator.walletBalance)}</h2></div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl bg-elevated p-4"><p className="text-xs text-muted">Reward source</p><p className="mt-1 text-sm text-soft">Attributed purchases</p></div>
+            <div className="rounded-xl bg-elevated p-4"><p className="text-xs text-muted">Payout status</p><p className="mt-1 text-sm text-soft">Preview only</p></div>
           </div>
-          <p className="text-xs text-slate-500 leading-relaxed border-t border-slate-100 pt-3">
-            Earned from completed and verified purchases through your recommendations and drops. Rewards become eligible 7 days after delivery.
-          </p>
+          <Button className="w-full sm:w-auto" onClick={() => setWithdrawOpen(true)}>Preview withdrawal <ArrowUpRight size={16} /></Button>
+          <p className="border-t border-line pt-4 text-sm leading-relaxed text-muted">Reward eligibility, settlement timing, and payout methods will be confirmed before real transactions are enabled.</p>
         </Card>
       )}
+      <Dialog isOpen={withdrawOpen && !isPublicProfile} onClose={() => setWithdrawOpen(false)} title="Withdrawal preview">
+        <div className="space-y-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success-soft text-success"><Check size={24} /></div>
+          <p className="text-base leading-relaxed text-soft">This is a preview of your reward wallet. No withdrawal request or money transfer has been made.</p>
+          <Button className="w-full" onClick={() => setWithdrawOpen(false)}>Got it</Button>
+        </div>
+      </Dialog>
     </div>
   )
 }

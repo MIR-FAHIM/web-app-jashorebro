@@ -1,20 +1,19 @@
-import React from 'react'
 import { cn } from '../lib/cn'
 
 const variantStyles = {
-  primary: 'bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-hover)] active:scale-[0.98]',
-  'drop-fire': 'bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold shadow-md shadow-orange-500/20 hover:brightness-105 active:scale-[0.98]',
-  secondary: 'bg-slate-100 text-slate-800 hover:bg-slate-200 active:scale-[0.98]',
-  outline: 'border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-[0.98]',
-  ghost: 'text-slate-600 hover:bg-slate-100 active:scale-[0.98]',
-  danger: 'bg-red-500 text-white hover:bg-red-600 active:scale-[0.98]',
+  primary: 'bg-brand text-on-brand hover:bg-[var(--color-brand-hover)] active:scale-[0.98]',
+  'drop-fire': 'bg-brand text-on-brand hover:bg-[var(--color-brand-hover)] active:scale-[0.98]',
+  secondary: 'bg-elevated text-ink hover:bg-line active:scale-[0.98]',
+  outline: 'border border-field-border text-soft hover:bg-elevated hover:text-ink active:scale-[0.98]',
+  ghost: 'text-muted hover:bg-elevated hover:text-ink active:scale-[0.98]',
+  danger: 'bg-danger-soft text-danger border border-danger/30 hover:bg-danger/20 active:scale-[0.98]',
 }
 
 const sizeStyles = {
-  sm: 'px-3 py-1.5 text-xs rounded-lg',
-  md: 'px-4 py-2 text-sm rounded-xl',
-  lg: 'px-5 py-3 text-base rounded-xl font-medium',
-  icon: 'p-2 rounded-xl flex items-center justify-center',
+  sm: 'min-h-11 px-3 py-2 text-sm rounded-xl',
+  md: 'min-h-11 px-4 py-2.5 text-sm rounded-xl',
+  lg: 'min-h-12 px-5 py-3 text-base rounded-xl',
+  icon: 'size-11 rounded-xl flex items-center justify-center shrink-0',
 }
 
 export function Button({
@@ -24,10 +23,12 @@ export function Button({
   className,
   isLoading = false,
   disabled,
+  type = 'button',
   ...props
 }) {
   return (
     <button
+      type={type}
       disabled={disabled || isLoading}
       className={cn(
         'inline-flex items-center justify-center gap-2 transition-all font-medium select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',

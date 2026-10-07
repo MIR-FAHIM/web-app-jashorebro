@@ -1,42 +1,18 @@
-import React from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ShieldCheck, Flame } from 'lucide-react'
+import { Link, Outlet, useLocation } from 'react-router-dom'
+import { ArrowLeft, Flame } from 'lucide-react'
 
 export function FocusedLayout() {
-  const navigate = useNavigate()
-
+  const { pathname } = useLocation()
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
-      {/* Focused Header */}
-      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80">
-        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-950 p-1.5 -ml-1 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
-            aria-label="Back"
-          >
-            <ArrowLeft size={18} />
-            <span className="hidden sm:inline">Back</span>
-          </button>
-
-          <div className="flex items-center gap-1.5">
-            <Flame size={16} className="text-[var(--color-brand)] fill-[var(--color-brand)]" />
-            <span className="font-black text-sm tracking-tight text-slate-900">
-              Jashore<span className="text-[var(--color-brand)]">Bro</span>
-            </span>
-          </div>
-
-          <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
-            <ShieldCheck size={14} />
-            <span>Secure Flow</span>
-          </div>
+    <div className="flex min-h-dvh flex-col bg-canvas text-ink">
+      <header className="sticky top-0 z-40 border-b border-line bg-canvas/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
+          <Link to={pathname === '/checkout' ? '/cart' : '/'} className="flex min-h-11 items-center gap-2 rounded-xl px-2 text-sm text-muted hover:bg-elevated hover:text-ink"><ArrowLeft size={20} /><span>Back</span></Link>
+          <Link to="/" className="flex items-center gap-2 text-sm font-bold"><Flame size={18} className="text-brand" />Jashore<span className="-ml-2 text-brand">Bro</span></Link>
+          <span className="rounded-full border border-line px-3 py-1 text-xs text-muted">Preview</span>
         </div>
       </header>
-
-      {/* Main Focused Content */}
-      <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-6">
-        <Outlet />
-      </main>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 pb-safe"><Outlet /></main>
     </div>
   )
 }

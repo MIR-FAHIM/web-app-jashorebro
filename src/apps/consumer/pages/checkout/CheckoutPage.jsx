@@ -1,217 +1,47 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ShieldCheck, Truck, Check } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ArrowLeft, ArrowRight, Check, CreditCard, MapPin, ShoppingBag } from 'lucide-react'
 import { Card } from '@/shared/ui/Card'
 import { Input } from '@/shared/ui/Input'
 import { Button } from '@/shared/ui/Button'
 import { Badge } from '@/shared/ui/Badge'
+import { useCart } from '@/features/cart/model/cartContext'
 import { formatCurrency } from '@/shared/lib/formatCurrency'
 
 export default function CheckoutPage() {
   const navigate = useNavigate()
+  const { items, subtotal, itemCount, clearCart } = useCart()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isComplete, setIsComplete] = useState(false)
-
-  const [form, setForm] = useState({
-    name: 'Fahim Ahmed',
-    phone: '01712345678',
-    address: 'House 14, Road 3, Mujib Sarak, Jashore',
-    city: 'Jashore',
-    paymentMethod: 'cod', // 'cod' | 'bkash'
-  })
-
-  const orderItem = {
-    title: 'Vintage Oversized Corduroy Hoodie',
-    category: 'Streetwear',
-    size: 'L',
-    color: 'Oatmeal',
-    unlockedPrice: 999,
-    retailPrice: 1200,
-    shippingFee: 60,
-  }
-
-  const total = orderItem.unlockedPrice + orderItem.shippingFee
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const [savedOrder, setSavedOrder] = useState(null)
+  const [form, setForm] = useState({ name: 'Fahim Ahmed', phone: '01712345678', address: '', city: 'Jashore', paymentMethod: 'cod' })
+  const updateField = (event) => setForm((previous) => ({ ...previous, [event.target.name]: event.target.value }))
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    if (isSubmitting) return
     setIsSubmitting(true)
+    const snapshot = { items: items.map((item) => ({ ...item })), subtotal, itemCount }
     setTimeout(() => {
+      setSavedOrder(snapshot)
+      clearCart()
       setIsSubmitting(false)
-      setIsComplete(true)
-    }, 700)
+    }, 500)
   }
 
-  if (isComplete) {
-    return (
-      <div className="max-w-md mx-auto text-center py-10 space-y-4">
-        <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
-          <Check size={32} />
-        </div>
-        <h2 className="text-xl font-bold text-slate-900">Drop Order Confirmed!</h2>
-        <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-          You got the community unlocked price of {formatCurrency(orderItem.unlockedPrice)}. The seller is preparing the batch shipment to Jashore.
-        </p>
-        <Button variant="primary" onClick={() => navigate('/activity')} className="mt-4">
-          View in Activity
-        </Button>
-      </div>
-    )
-  }
+  if (savedOrder) return <div className="mx-auto max-w-xl py-8"><Card className="space-y-5 p-6 text-center sm:p-9"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success-soft text-success"><Check size={30} /></div><Badge variant="unlocked">Demo complete</Badge><h1 className="text-2xl font-semibold tracking-tight text-ink">Your order preview is ready</h1><p className="text-[15px] leading-relaxed text-muted">{savedOrder.itemCount} {savedOrder.itemCount === 1 ? 'item' : 'items'} in one order, with an items total of {formatCurrency(savedOrder.subtotal)}. Your cart has been cleared for the next preview.</p><p className="rounded-xl bg-elevated p-4 text-sm leading-relaxed text-soft">No real order was sent and no payment was taken. Delivery and payment will be confirmed when ordering is enabled.</p><Button className="w-full" onClick={() => navigate('/explore')}>Discover more finds <ArrowRight size={17} /></Button></Card></div>
+
+  if (!items.length) return <Card className="mx-auto max-w-lg space-y-4 px-6 py-12 text-center"><ShoppingBag size={36} className="mx-auto text-brand" /><h1 className="text-2xl font-semibold text-ink">Your cart is empty</h1><p className="text-[15px] text-muted">Add a good find before reviewing your order.</p><Button onClick={() => navigate('/explore')}>Explore products <ArrowRight size={17} /></Button></Card>
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Checkout Unlocked Drop</h2>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Confirm delivery address and payment to finalize your spot.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Form (2 columns on desktop) */}
-        <form onSubmit={handleSubmit} className="md:col-span-2 space-y-4">
-          <Card className="p-5 space-y-4">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Truck size={17} className="text-orange-500" /> Delivery Details
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Input
-                label="Full Name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                required
-              />
-              <Input
-                label="Phone Number"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                required
-              />
-            </div>
-
-            <Input
-              label="Delivery Address"
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-              required
-            />
-
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="District / City"
-                value={form.city}
-                onChange={(e) => setForm({ ...form, city: e.target.value })}
-                required
-              />
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-slate-700">Campus Pickup</label>
-                <select className="w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none">
-                  <option>Home Delivery (৳60)</option>
-                  <option>JUST Campus Hub (Free / ৳20)</option>
-                  <option>MMC College Hub (Free / ৳20)</option>
-                </select>
-              </div>
-            </div>
-          </Card>
-
-          {/* Payment Method */}
-          <Card className="p-5 space-y-3">
-            <h3 className="text-sm font-bold text-slate-900">Payment Option</h3>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <label
-                className={`p-3 rounded-xl border cursor-pointer flex flex-col justify-between transition-all ${
-                  form.paymentMethod === 'cod'
-                    ? 'border-[var(--color-brand)] bg-orange-50/40 text-slate-900 font-bold'
-                    : 'border-slate-200 text-slate-600'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={form.paymentMethod === 'cod'}
-                  onChange={() => setForm({ ...form, paymentMethod: 'cod' })}
-                  className="hidden"
-                />
-                <span>Cash on Delivery</span>
-                <span className="text-[11px] text-slate-400 font-normal mt-1">Pay when parcel arrives</span>
-              </label>
-
-              <label
-                className={`p-3 rounded-xl border cursor-pointer flex flex-col justify-between transition-all ${
-                  form.paymentMethod === 'bkash'
-                    ? 'border-[var(--color-brand)] bg-orange-50/40 text-slate-900 font-bold'
-                    : 'border-slate-200 text-slate-600'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={form.paymentMethod === 'bkash'}
-                  onChange={() => setForm({ ...form, paymentMethod: 'bkash' })}
-                  className="hidden"
-                />
-                <span>bKash Instant</span>
-                <span className="text-[11px] text-slate-400 font-normal mt-1">Instant digital payment</span>
-              </label>
-            </div>
-          </Card>
-
-          <Button type="submit" variant="drop-fire" size="lg" className="w-full" isLoading={isSubmitting}>
-            Place Drop Order • {formatCurrency(total)}
-          </Button>
-        </form>
-
-        {/* Order Summary (Adjacent on desktop) */}
-        <div className="space-y-4">
-          <Card className="p-5 space-y-4">
-            <h3 className="text-sm font-bold text-slate-900">Order Summary</h3>
-
-            <div className="flex gap-3 pb-3 border-b border-slate-100">
-              <img
-                src="https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=200&q=80"
-                alt="Product"
-                className="w-14 h-14 rounded-xl object-cover bg-slate-100 shrink-0"
-              />
-              <div className="flex-1 min-w-0">
-                <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
-                  {orderItem.title}
-                </h4>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Size: {orderItem.size} • Color: {orderItem.color}
-                </p>
-                <Badge variant="unlocked" size="sm" className="mt-1">
-                  Tier 3 Price
-                </Badge>
-              </div>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between text-slate-500">
-                <span>Community Unlocked Price</span>
-                <span className="text-slate-900 font-semibold">{formatCurrency(orderItem.unlockedPrice)}</span>
-              </div>
-              <div className="flex justify-between text-emerald-600 font-medium">
-                <span>Your Group Savings</span>
-                <span>-{formatCurrency(orderItem.retailPrice - orderItem.unlockedPrice)}</span>
-              </div>
-              <div className="flex justify-between text-slate-500">
-                <span>Shipping Fee</span>
-                <span className="text-slate-900 font-semibold">{formatCurrency(orderItem.shippingFee)}</span>
-              </div>
-              <div className="pt-2 border-t border-slate-100 flex justify-between text-sm font-extrabold text-slate-900">
-                <span>Total Amount</span>
-                <span>{formatCurrency(total)}</span>
-              </div>
-            </div>
-          </Card>
-
-          <div className="p-3 rounded-xl bg-slate-100 text-slate-600 text-[11px] flex items-center gap-2">
-            <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
-            <span>Guaranteed lowest unlocked tier price fulfillment.</span>
-          </div>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <Link to="/cart" className="inline-flex min-h-11 items-center gap-2 text-sm text-muted hover:text-ink"><ArrowLeft size={17} /> Back to cart</Link>
+      <div className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-3xl font-semibold tracking-tight text-ink">Make it yours</h1><p className="mt-2 text-[15px] text-muted">Review your items and delivery details.</p></div><Badge>Checkout preview</Badge></div>
+      <form onSubmit={handleSubmit} className="grid items-start gap-6 lg:grid-cols-3">
+        <div className="space-y-5 lg:col-span-2">
+          <Card className="space-y-5 p-5 sm:p-6"><h2 className="flex items-center gap-2 text-lg font-semibold text-ink"><MapPin size={19} className="text-brand" /> Delivery details</h2><div className="grid gap-4 sm:grid-cols-2"><Input id="checkout-name" name="name" label="Full name" autoComplete="name" value={form.name} onChange={updateField} required /><Input id="checkout-phone" name="phone" label="Phone number" type="tel" inputMode="tel" autoComplete="tel" pattern="([+]?88)?01[3-9][0-9]{8}" title="Enter a valid Bangladesh mobile number" value={form.phone} onChange={updateField} required /></div><Input id="checkout-address" name="address" label="Delivery address" autoComplete="street-address" placeholder="House, road, area, and a nearby landmark" value={form.address} onChange={updateField} required /><Input id="checkout-city" name="city" label="District / city" autoComplete="address-level2" value={form.city} onChange={updateField} required /><p className="text-xs leading-relaxed text-muted">Delivery availability and fees will be confirmed by the seller.</p></Card>
+          <Card className="space-y-4 p-5 sm:p-6"><h2 className="flex items-center gap-2 text-lg font-semibold text-ink"><CreditCard size={19} className="text-brand" /> Payment preference</h2><fieldset className="grid gap-3 sm:grid-cols-2"><legend className="sr-only">Choose a payment preference for this preview</legend>{[['cod', 'Cash on delivery', 'Pay when your parcel arrives'], ['bkash', 'bKash', 'Digital payment preference']].map(([value, label, description]) => <label key={value} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 ${form.paymentMethod === value ? 'border-brand bg-brand-soft' : 'border-field-border bg-elevated'}`}><input type="radio" name="paymentMethod" value={value} checked={form.paymentMethod === value} onChange={updateField} className="mt-1 h-4 w-4 accent-[var(--color-brand)]" /><span><span className="block text-sm font-medium text-ink">{label}</span><span className="mt-1 block text-xs leading-relaxed text-muted">{description}</span></span></label>)}</fieldset><p className="text-xs text-muted">This preview does not collect or process a payment.</p></Card>
         </div>
-      </div>
+        <aside className="space-y-4 lg:sticky lg:top-24"><Card className="space-y-5 p-5 sm:p-6"><div className="flex items-center justify-between"><h2 className="text-lg font-semibold text-ink">One order</h2><span className="text-xs text-muted">{itemCount} {itemCount === 1 ? 'item' : 'items'}</span></div><div className="space-y-4">{items.map((item) => <div key={item.id} className="flex gap-3"><img src={item.image} alt={item.name} className="h-16 w-16 shrink-0 rounded-xl bg-elevated object-cover" /><div className="min-w-0"><h3 className="text-sm font-medium leading-snug text-ink">{item.name}</h3><p className="mt-1 text-xs text-muted">Qty {item.quantity} · {formatCurrency(item.price)} each</p><p className="mt-1 text-sm font-semibold text-soft">{formatCurrency(item.price * item.quantity)}</p></div></div>)}</div><div className="space-y-3 border-t border-line pt-4"><div className="flex justify-between gap-3 text-sm text-muted"><span>Items subtotal</span><span className="font-medium text-ink">{formatCurrency(subtotal)}</span></div><div className="flex justify-between gap-3 text-sm text-muted"><span>Delivery</span><span className="text-right text-soft">To be confirmed</span></div><div className="flex items-center justify-between gap-3 border-t border-line pt-4 text-base font-semibold text-ink"><span>Items total</span><span className="text-xl">{formatCurrency(subtotal)}</span></div></div><Button type="submit" className="w-full" size="lg" isLoading={isSubmitting}>Save demo order <ArrowRight size={17} /></Button><p className="text-center text-xs leading-relaxed text-muted">Creates a local order preview. No charge or real order submission.</p></Card><Link to="/cart" className="flex min-h-11 items-center justify-center text-sm text-muted hover:text-ink">Edit items in cart</Link></aside>
+      </form>
     </div>
   )
 }

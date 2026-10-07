@@ -1,136 +1,116 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Flame, CheckCircle, Package, ArrowRight } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ArrowUpRight, Check, Package, ShoppingBag, Users } from 'lucide-react'
 import { Card } from '@/shared/ui/Card'
 import { Badge } from '@/shared/ui/Badge'
 import { Button } from '@/shared/ui/Button'
+import { DropProgress } from '@/features/drops/components/DropProgress'
+import { calculateDropTier } from '@/features/drops/model/dropStatuses'
+import { useDropInterests } from '@/features/drops/model/useDropInterest'
+import { useCart } from '@/features/cart/model/cartContext'
 import { formatCurrency } from '@/shared/lib/formatCurrency'
+import { MOCK_DROPS, MOCK_PRODUCTS, toCartItem } from '../mockCatalog'
 
 export default function ActivityPage() {
   const navigate = useNavigate()
+  const { addItem } = useCart()
+  const [tab, setTab] = useState('drops')
+  const drops = useDropInterests(MOCK_DROPS).filter((drop) => drop.isJoined)
+  const delivered = MOCK_PRODUCTS[1]
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
-      <div>
-        <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Your Activity</h2>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Drops you joined, unlocked prices, and order deliveries.
-        </p>
+    <div className="mx-auto max-w-3xl space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-ink">Your activity</h1>
+          <p className="mt-2 text-[15px] text-muted">Keep up with your Drops and orders.</p>
+        </div>
+        <Badge variant="default">Preview activity</Badge>
       </div>
-
-      {/* Active Joined Drops Section */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-          Drops You're In (2)
-        </h3>
-
-        {/* Drop 1 */}
-        <Card className="p-4 space-y-3 border-orange-200/80 bg-orange-50/20">
-          <div className="flex items-center justify-between">
-            <Badge variant="fire" size="sm">
-              <Flame size={12} /> Rallying Now
-            </Badge>
-            <span className="text-xs text-slate-500 font-medium">Closes in 18h</span>
-          </div>
-
-          <div className="flex gap-3">
-            <img
-              src="https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=300&q=80"
-              alt="Hoodie"
-              className="w-16 h-16 rounded-xl object-cover"
-            />
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-bold text-slate-900 line-clamp-1">
-                Vintage Oversized Corduroy Hoodie
-              </h4>
-              <p className="text-xs text-slate-600 mt-0.5">
-                Current unlocked price: <strong className="text-emerald-700">৳999</strong> (saved ৳201)
-              </p>
-              <p className="text-[11px] text-orange-600 font-medium mt-1">
-                🔥 7 more people needed to hit ৳899!
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-orange-100 flex items-center justify-between">
-            <button
-              onClick={() => navigate('/drops/drop_1')}
-              className="text-xs font-bold text-[var(--color-brand)] hover:underline flex items-center gap-1 cursor-pointer"
-            >
-              View Drop Progress <ArrowRight size={13} />
-            </button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => navigate('/checkout')}
-              className="text-xs"
-            >
-              Pre-Checkout (৳999)
-            </Button>
-          </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Card className="p-4">
+          <Users size={19} className="mb-3 text-brand" />
+          <p className="text-2xl font-semibold text-ink">{drops.length}</p>
+          <p className="mt-1 text-sm text-muted">Drops joined</p>
         </Card>
-
-        {/* Drop 2 */}
-        <Card className="p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <Badge variant="unlocked" size="sm">
-              🎉 Unlocked Lowest Tier!
-            </Badge>
-            <span className="text-xs text-slate-500 font-medium">Ready for checkout</span>
-          </div>
-
-          <div className="flex gap-3">
-            <img
-              src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=300&q=80"
-              alt="Headset"
-              className="w-16 h-16 rounded-xl object-cover"
-            />
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-bold text-slate-900 line-clamp-1">
-                Havit H2002D RGB Gaming Headset
-              </h4>
-              <p className="text-xs text-slate-600 mt-0.5">
-                Final price: <strong className="text-emerald-700">৳2,099</strong> (Retail ৳2,600)
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-xs text-slate-500">Checkout window closes in 24h</span>
-            <Button
-              variant="drop-fire"
-              size="sm"
-              onClick={() => navigate('/checkout')}
-              className="text-xs"
-            >
-              Complete Order
-            </Button>
-          </div>
+        <Card className="p-4">
+          <Package size={19} className="mb-3 text-success" />
+          <p className="text-2xl font-semibold text-ink">1</p>
+          <p className="mt-1 text-sm text-muted">Sample order</p>
         </Card>
       </div>
-
-      {/* Recent Deliveries */}
-      <div className="space-y-3 pt-3">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-          Completed Orders (1)
-        </h3>
-        <Card className="p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
-              <Package size={20} />
-            </div>
+      <div className="flex gap-2 border-b border-line pb-3">
+        {[['drops', 'Your Drops'], ['orders', 'Orders']].map(([value, label]) => (
+          <button
+            key={value}
+            onClick={() => setTab(value)}
+            aria-pressed={tab === value}
+            className={`min-h-11 rounded-xl px-4 text-sm font-medium ${tab === value ? 'bg-ink text-canvas' : 'bg-surface text-soft hover:bg-elevated'}`}
+          >{label}</button>
+        ))}
+      </div>
+      {tab === 'drops' ? (
+        <div className="space-y-4">
+          {drops.length ? drops.map((drop) => {
+            const price = calculateDropTier(drop.tiers, drop.currentParticipants).currentTier.price
+            return (
+              <Card key={drop.id} className="space-y-4 p-4 sm:p-5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Badge variant="brand">Drop in progress</Badge>
+                  <span className="text-xs text-muted">{drop.currentParticipants} people in</span>
+                </div>
+                <Link to={`/drops/${drop.id}`} className="flex items-center gap-4">
+                  <img src={drop.image} alt={drop.title} className="h-20 w-20 shrink-0 rounded-xl bg-elevated object-cover" />
+                  <div className="min-w-0">
+                    <h2 className="text-base font-semibold leading-snug text-ink">{drop.title}</h2>
+                    <p className="mt-1 text-xs text-muted">{drop.category}</p>
+                  </div>
+                </Link>
+                <div className="border-t border-line pt-4">
+                  <DropProgress tiers={drop.tiers} currentParticipants={drop.currentParticipants} retailPrice={drop.retailPrice} />
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Link to={`/drops/${drop.id}`} className="flex min-h-11 items-center gap-1.5 text-sm text-soft hover:text-brand">
+                    View progress <ArrowUpRight size={16} />
+                  </Link>
+                  <Button variant="outline" onClick={() => { addItem(toCartItem(drop, price)); navigate('/cart') }}>
+                    <ShoppingBag size={16} /> Add to cart
+                  </Button>
+                </div>
+              </Card>
+            )
+          }) : (
+            <Card className="space-y-3 p-8 text-center">
+              <Users size={28} className="mx-auto text-brand" />
+              <h2 className="text-lg font-semibold text-ink">Your next Drop is waiting</h2>
+              <p className="text-sm text-muted">Join a Drop to follow its group price here.</p>
+              <Button onClick={() => navigate('/explore?tab=drops')}>Explore Drops</Button>
+            </Card>
+          )}
+          <p className="px-1 text-xs leading-relaxed text-muted">Joining a Drop shows interest. Review the current price in your cart before ordering.</p>
+        </div>
+      ) : (
+        <Card className="space-y-5 p-5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-muted">Sample order · JB-1024</span>
+            <Badge variant="unlocked"><Check size={13} /> Delivered</Badge>
+          </div>
+          <div className="flex items-center gap-4">
+            <img src={delivered.image} alt={delivered.title} className="h-20 w-20 rounded-xl object-cover" />
             <div>
-              <h4 className="text-xs font-bold text-slate-900">
-                Retro High-Top Sneakers
-              </h4>
-              <p className="text-[11px] text-slate-500">Delivered to Jashore City • 14 Oct</p>
+              <h2 className="text-base font-semibold text-ink">{delivered.title}</h2>
+              <p className="mt-1 text-sm text-muted">1 item · {formatCurrency(delivered.retailPrice)}</p>
             </div>
           </div>
-          <Badge variant="default" size="sm">
-            Delivered
-          </Badge>
+          <div className="flex items-center gap-3 rounded-xl bg-elevated p-4 text-sm text-soft">
+            <Package size={20} className="shrink-0 text-success" />
+            <span>Delivered to Jashore City.<br /><span className="text-xs text-muted">Illustrative delivery status for the UI preview.</span></span>
+          </div>
+          <Button variant="outline" className="w-full" onClick={() => navigate(`/products/${delivered.id}`)}>
+            View product <ArrowUpRight size={16} />
+          </Button>
         </Card>
-      </div>
+      )}
     </div>
   )
 }

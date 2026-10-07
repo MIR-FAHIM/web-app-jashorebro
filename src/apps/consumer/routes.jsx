@@ -1,4 +1,4 @@
-import React, { lazy } from 'react'
+import { lazy } from 'react'
 import { Route } from 'react-router-dom'
 import { ConsumerLayout } from './layout/ConsumerLayout'
 import { FocusedLayout } from './layout/FocusedLayout'
@@ -10,6 +10,7 @@ const ProductDetailsPage = lazy(() => import('./pages/product-details/ProductDet
 const ProfilePage = lazy(() => import('./pages/profile/ProfilePage'))
 const ActivityPage = lazy(() => import('./pages/activity/ActivityPage'))
 const CheckoutPage = lazy(() => import('./pages/checkout/CheckoutPage'))
+const CartPage = lazy(() => import('./pages/cart/CartPage'))
 const AuthScreen = lazy(() =>
   import('@/features/auth/components/AuthScreen').then((m) => ({ default: m.AuthScreen }))
 )
@@ -24,12 +25,15 @@ export const consumerRoutes = (
       <Route path="/products/:id" element={<ProductDetailsPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/activity" element={<ActivityPage />} />
+      <Route path="/cart" element={<CartPage />} />
     </Route>
 
-    {/* Focused Flows (Checkout, Auth) without Bottom Navigation */}
+    {/* Focused Flows (Checkout, Auth, Login, Register) without Bottom Navigation */}
     <Route element={<FocusedLayout />}>
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/auth" element={<AuthScreen />} />
+      <Route path="/login" element={<AuthScreen />} />
+      <Route path="/register" element={<AuthScreen />} />
     </Route>
   </>
 )

@@ -1,173 +1,47 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Search, Flame, Tag, Filter } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { ArrowUpRight, Search, Users, X } from 'lucide-react'
 import { Card } from '@/shared/ui/Card'
 import { Badge } from '@/shared/ui/Badge'
+import { Button } from '@/shared/ui/Button'
 import { formatCurrency } from '@/shared/lib/formatCurrency'
+import { calculateDropTier } from '@/features/drops/model/dropStatuses'
+import { useDropInterests } from '@/features/drops/model/useDropInterest'
+import { MOCK_DROPS, MOCK_PRODUCTS } from '../mockCatalog'
 
-const MOCK_EXPLORE_ITEMS = [
-  {
-    id: 'drop_1',
-    title: 'Vintage Oversized Corduroy Hoodie',
-    category: 'Streetwear',
-    currentPrice: 999,
-    retailPrice: 1200,
-    participants: 18,
-    image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=600&q=80',
-    type: 'drop',
-  },
-  {
-    id: 'drop_2',
-    title: 'Havit H2002D RGB Gaming Headset',
-    category: 'Tech & Gadgets',
-    currentPrice: 2099,
-    retailPrice: 2600,
-    participants: 28,
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80',
-    type: 'drop',
-  },
-  {
-    id: 'prod_1',
-    title: 'Redragon K552 Mechanical Keyboard',
-    category: 'Tech & Gadgets',
-    currentPrice: 3200,
-    retailPrice: 3200,
-    participants: 0,
-    image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
-    type: 'product',
-  },
-  {
-    id: 'prod_2',
-    title: 'Retro High-Top White Canvas Sneakers',
-    category: 'Footwear',
-    currentPrice: 1650,
-    retailPrice: 1650,
-    participants: 0,
-    image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=600&q=80',
-    type: 'product',
-  },
-]
+const CATEGORIES = ['All categories', 'Streetwear', 'Tech & Gadgets', 'Footwear']
 
 export default function ExplorePage() {
-  const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('all') // 'all' | 'drops' | 'products'
-  const [searchQuery, setSearchQuery] = useState('')
-
-  const filteredItems = MOCK_EXPLORE_ITEMS.filter((item) => {
-    if (activeTab === 'drops' && item.type !== 'drop') return false
-    if (activeTab === 'products' && item.type !== 'product') return false
-    if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
-    return true
-  })
+  const [searchParams, setSearchParams] = useSearchParams()
+  const drops = useDropInterests(MOCK_DROPS)
+  const items = [...drops.map((item) => ({ ...item, type: 'drop', price: calculateDropTier(item.tiers, item.currentParticipants).currentTier.price })), ...MOCK_PRODUCTS.map((item) => ({ ...item, type: 'product', price: item.retailPrice }))]
+  const activeTab = searchParams.get('tab') === 'products' ? 'product' : searchParams.get('tab') === 'drops' ? 'drop' : 'all'
+  const searchQuery = searchParams.get('q') || ''
+  const setSearchQuery = (value) => {
+    const next = new URLSearchParams(searchParams)
+    if (value) next.set('q', value)
+    else next.delete('q')
+    setSearchParams(next, { replace: true })
+  }
+  const setActiveTab = (value) => {
+    const next = new URLSearchParams(searchParams)
+    if (value === 'all') next.delete('tab')
+    else next.set('tab', value === 'product' ? 'products' : 'drops')
+    setSearchParams(next, { replace: true })
+  }
+  const [category, setCategory] = useState('All categories')
+  const filteredItems = items.filter((item) => (activeTab === 'all' || item.type === activeTab) && (category === 'All categories' || item.category === category) && `${item.title} ${item.category}`.toLowerCase().includes(searchQuery.trim().toLowerCase()))
 
   return (
-    <div className="space-y-4 max-w-4xl mx-auto">
-      {/* Search Header */}
-      <div className="relative">
-        <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search products, drops, categories..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200/80 rounded-2xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/20 focus:border-[var(--color-brand)] shadow-xs"
-        />
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div><p className="mb-2 text-xs font-medium tracking-wide text-brand">DISCOVER YOUR NEXT FAVORITE</p><h1 className="text-3xl font-semibold tracking-tight text-ink">Explore</h1><p className="mt-2 text-[15px] text-muted">Browse the catalog. Find a Drop. Bring your circle.</p></div>
+      <div className="space-y-4 rounded-2xl border border-line bg-surface p-4 sm:p-5">
+        <div className="relative"><Search size={20} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" /><input aria-label="Search products and categories" type="search" placeholder="Search products or categories" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} className="h-13 w-full rounded-xl border border-field-border bg-elevated pl-12 pr-12 text-base text-ink placeholder:text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20" />{searchQuery && <button onClick={() => setSearchQuery('')} aria-label="Clear search" className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-muted hover:text-ink"><X size={18} /></button>}</div>
+        <div className="flex flex-wrap gap-2" aria-label="Item type">{[['all', 'Everything'], ['drop', 'Active Drops'], ['product', 'Products']].map(([value, label]) => <button key={value} onClick={() => setActiveTab(value)} aria-pressed={activeTab === value} className={`min-h-11 rounded-xl px-4 text-sm font-medium ${activeTab === value ? 'bg-brand text-on-brand' : 'bg-elevated text-soft hover:text-ink'}`}>{label}</button>)}</div>
       </div>
-
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-        <button
-          onClick={() => setActiveTab('all')}
-          className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-            activeTab === 'all'
-              ? 'bg-slate-900 text-white'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          All Items
-        </button>
-        <button
-          onClick={() => setActiveTab('drops')}
-          className={`px-3 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1 transition-all cursor-pointer ${
-            activeTab === 'drops'
-              ? 'bg-orange-600 text-white'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Flame size={14} /> Active Drops
-        </button>
-        <button
-          onClick={() => setActiveTab('products')}
-          className={`px-3 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1 transition-all cursor-pointer ${
-            activeTab === 'products'
-              ? 'bg-slate-900 text-white'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Tag size={14} /> Products (Start Drop)
-        </button>
-      </div>
-
-      {/* Items Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        {filteredItems.map((item) => (
-          <Card
-            key={item.id}
-            className="cursor-pointer hover:shadow-md transition-shadow flex flex-col"
-            onClick={() =>
-              navigate(item.type === 'drop' ? `/drops/${item.id}` : `/products/${item.id}`)
-            }
-          >
-            <div className="relative aspect-square bg-slate-100 overflow-hidden">
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-              />
-              {item.type === 'drop' ? (
-                <div className="absolute top-2 left-2">
-                  <Badge variant="fire" size="sm">
-                    🔥 {item.participants} in
-                  </Badge>
-                </div>
-              ) : (
-                <div className="absolute top-2 left-2">
-                  <Badge variant="default" size="sm">
-                    Catalog
-                  </Badge>
-                </div>
-              )}
-            </div>
-
-            <div className="p-3 flex-1 flex flex-col justify-between">
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  {item.category}
-                </span>
-                <h4 className="text-xs md:text-sm font-bold text-slate-900 line-clamp-2 mt-0.5">
-                  {item.title}
-                </h4>
-              </div>
-
-              <div className="mt-3 pt-2 border-t border-slate-100 flex items-baseline justify-between">
-                <div>
-                  <span className="text-sm md:text-base font-extrabold text-slate-900">
-                    {formatCurrency(item.currentPrice)}
-                  </span>
-                  {item.retailPrice > item.currentPrice && (
-                    <span className="text-[10px] text-slate-400 line-through ml-1.5">
-                      {formatCurrency(item.retailPrice)}
-                    </span>
-                  )}
-                </div>
-                <span className="text-[11px] font-bold text-[var(--color-brand)]">
-                  {item.type === 'drop' ? 'Join →' : 'Drop →'}
-                </span>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+      <div className="flex items-center gap-2 overflow-x-auto pb-1" aria-label="Product category">{CATEGORIES.map((label) => <button key={label} aria-pressed={category === label} onClick={() => setCategory(label)} className={`min-h-11 whitespace-nowrap rounded-full border px-4 text-sm ${category === label ? 'border-field-border bg-elevated text-ink' : 'border-line text-muted hover:text-ink'}`}>{label}</button>)}</div>
+      <div className="flex items-center justify-between gap-3"><h2 className="text-base font-semibold text-ink">{category === 'All categories' ? 'The discovery edit' : category}</h2><p className="text-xs text-muted" aria-live="polite">{filteredItems.length} {filteredItems.length === 1 ? 'find' : 'finds'}</p></div>
+      {filteredItems.length ? <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">{filteredItems.map((item) => <Card key={item.id} className="group flex flex-col overflow-hidden"><Link to={item.type === 'drop' ? `/drops/${item.id}` : `/products/${item.id}`} className="relative block aspect-square overflow-hidden bg-elevated"><img src={item.image} alt={item.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 motion-safe:group-hover:scale-105" /><span className="absolute left-2 top-2 sm:left-3 sm:top-3"><Badge variant={item.type === 'drop' ? 'brand' : 'default'}>{item.type === 'drop' ? 'Active Drop' : 'Catalog'}</Badge></span></Link><div className="flex flex-1 flex-col p-3 sm:p-4"><p className="text-xs text-muted">{item.category}</p><Link to={item.type === 'drop' ? `/drops/${item.id}` : `/products/${item.id}`} className="mt-1.5 line-clamp-2 text-sm font-medium leading-snug text-ink hover:text-brand sm:text-base">{item.title}</Link><div className="mt-auto pt-4"><div className="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span className="text-lg font-semibold tracking-tight text-ink sm:text-xl">{formatCurrency(item.price)}</span>{item.retailPrice > item.price && <span className="text-xs text-muted line-through">{formatCurrency(item.retailPrice)}</span>}</div><div className="mt-3 flex items-center justify-between gap-1 border-t border-line pt-3"><span className="flex items-center gap-1.5 text-xs text-muted">{item.type === 'drop' ? <><Users size={14} /> {item.currentParticipants} in</> : 'Regular price'}</span><Link className="flex min-h-8 items-center gap-1 text-xs font-medium text-brand" to={item.type === 'drop' ? `/drops/${item.id}` : `/products/${item.id}`}>{item.type === 'drop' ? 'View Drop' : 'Details'}<ArrowUpRight size={14} /></Link></div></div></div></Card>)}</div> : <Card className="px-6 py-12 text-center"><Search size={28} className="mx-auto mb-4 text-muted" /><h2 className="text-lg font-semibold text-ink">No finds yet</h2><p className="mt-2 text-sm text-muted">Try another search or broaden your category.</p><Button className="mt-5" variant="outline" onClick={() => { setSearchParams({}); setCategory('All categories') }}>Reset filters</Button></Card>}
     </div>
   )
 }

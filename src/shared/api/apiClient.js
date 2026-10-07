@@ -1,6 +1,17 @@
 import { ApiError } from './errors'
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+const rawBase = import.meta.env.VITE_API_BASE_URL || 'https://backend.jashorebro.com/api'
+const BASE_URL = rawBase.replace(/\/+$/, '')
+
+function resolveUrl(endpoint) {
+  if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
+    return endpoint
+  }
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
+  const baseHasApi = BASE_URL.endsWith('/api') || BASE_URL === '/api'
+  const finalBase = (!baseHasApi && BASE_URL.startsWith('http')) ? `${BASE_URL}/api` : BASE_URL
+  return `${finalBase}${cleanEndpoint}`
+}
 
 /**
  * Standard HTTP transport client for Laravel API.
@@ -31,8 +42,9 @@ export async function apiClient(endpoint, { data, method = 'GET', headers = {}, 
   }
 
   try {
-    const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`
+    const url = resolveUrl(endpoint)
     const response = await fetch(url, config)
+
 
     if (response.status === 401) {
       // Clear token if unauthenticated

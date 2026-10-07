@@ -1,4 +1,3 @@
-import React from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '../lib/cn'
@@ -27,15 +26,15 @@ export function PageHeader({
         {showBack && (
           <button
             onClick={handleBack}
-            className="p-1.5 -ml-1 rounded-xl text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 -ml-1 rounded-xl text-soft hover:text-ink hover:bg-elevated transition-colors cursor-pointer"
             aria-label="Go back"
           >
             <ArrowLeft size={20} />
           </button>
         )}
         <div>
-          <h1 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight">{title}</h1>
-          {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+          <h1 className="text-lg md:text-xl font-bold text-ink tracking-tight">{title}</h1>
+          {subtitle && <p className="text-xs text-muted mt-0.5">{subtitle}</p>}
         </div>
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}

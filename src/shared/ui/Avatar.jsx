@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { cn } from '../lib/cn'
 
 const sizeStyles = {
@@ -30,7 +30,7 @@ export function Avatar({
   return (
     <div
       className={cn(
-        'relative inline-flex items-center justify-center shrink-0 rounded-full overflow-hidden bg-slate-100 text-slate-700 select-none border border-slate-200/60',
+        'relative inline-flex items-center justify-center shrink-0 rounded-full overflow-hidden bg-elevated text-soft select-none border border-line',
         sizeStyles[size] || sizeStyles.md,
         className
       )}

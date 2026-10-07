@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { Share2, Clock, ShieldCheck, Sparkles, CheckCircle2 } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Check, CheckCircle2, Clock, Share2, ShoppingBag, Users } from 'lucide-react'
 import { PageHeader } from '@/shared/patterns/PageHeader'
 import { Card } from '@/shared/ui/Card'
 import { Badge } from '@/shared/ui/Badge'
@@ -8,176 +8,55 @@ import { Button } from '@/shared/ui/Button'
 import { Avatar } from '@/shared/ui/Avatar'
 import { DropProgress } from '@/features/drops/components/DropProgress'
 import { ImInButton } from '@/features/drops/components/ImInButton'
+import { calculateDropTier } from '@/features/drops/model/dropStatuses'
+import { useDropInterest } from '@/features/drops/model/useDropInterest'
+import { useCart } from '@/features/cart/model/cartContext'
 import { formatCurrency } from '@/shared/lib/formatCurrency'
+import { getDrop, toCartItem } from '../mockCatalog'
 
-export default function DropDetailsPage() {
-  const { id } = useParams()
+function DropView({ drop }) {
   const navigate = useNavigate()
-
-  const [isJoined, setIsJoined] = useState(false)
-  const [participants, setParticipants] = useState(18)
-
-  const drop = {
-    id: id || 'drop_1',
-    title: 'Vintage Oversized Corduroy Hoodie',
-    category: 'Streetwear',
-    retailPrice: 1200,
-    currentPrice: 999,
-    description:
-      'Premium heavy corduroy cotton blend with drop-shoulder silhouette. Tailored for comfortable everyday wear and casual styling in cool weather.',
-    images: [
-      'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80',
-    ],
-    tiers: [
-      { requiredParticipants: 1, price: 1200 },
-      { requiredParticipants: 10, price: 1099 },
-      { requiredParticipants: 25, price: 999 },
-      { requiredParticipants: 50, price: 899 },
-      { requiredParticipants: 100, price: 799 },
-    ],
-    curator: {
-      name: 'Fahim Ahmed',
-      handle: 'fahim_vibes',
-      tasteScore: '4.9',
-      recommendationCount: 42,
-    },
-    endsIn: '2 days 14 hours',
-  }
-
-  const handleToggleJoin = () => {
-    setIsJoined((prev) => {
-      const next = !prev
-      setParticipants((p) => (next ? p + 1 : p - 1))
-      return next
-    })
+  const { addItem } = useCart()
+  const { isJoined, currentParticipants: participants, toggleJoin } = useDropInterest(drop)
+  const [shareMessage, setShareMessage] = useState('')
+  const { currentTier } = calculateDropTier(drop.tiers, participants)
+  const currentPrice = currentTier?.price ?? drop.retailPrice
+  const share = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      setShareMessage('Drop link copied')
+    } catch {
+      setShareMessage('Copy the page address to share this Drop.')
+    }
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4">
-      <PageHeader
-        title={drop.title}
-        subtitle={`${drop.category} • Curated by ${drop.curator.name}`}
-        showBack
-        actions={
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(window.location.href)
-              alert('Drop link copied!')
-            }}
-            className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-            title="Share"
-          >
-            <Share2 size={18} />
-          </button>
-        }
-      />
-
-      {/* Side-by-side on desktop, stacked on mobile */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Media Gallery */}
-        <div className="space-y-3">
-          <div className="aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/80">
-            <img
-              src={drop.images[0]}
-              alt={drop.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Clock size={14} className="text-orange-500" />
-            <span>Drop closes in <strong className="text-slate-800">{drop.endsIn}</strong></span>
-          </div>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <PageHeader title="Drop details" subtitle="A good find, picked by your community." showBack actions={<button onClick={share} className="flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-soft hover:text-brand" aria-label="Copy Drop link"><Share2 size={18} /></button>} />
+      {shareMessage && <p role="status" className="text-sm text-brand">{shareMessage}</p>}
+      <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
+        <div className="space-y-4">
+          <div className="relative aspect-square overflow-hidden rounded-3xl border border-line bg-elevated"><img src={drop.image} alt={drop.title} className="h-full w-full object-cover" /><span className="absolute left-4 top-4"><Badge variant="brand">{drop.category}</Badge></span></div>
+          <Card className="flex items-start gap-3 p-4"><Avatar name={drop.curator.name} size="md" /><div><Link to={`/profile?person=${drop.curator.handle}`} className="text-sm font-semibold text-ink hover:text-brand">Picked by {drop.curator.name}</Link><p className="mt-1 text-sm leading-relaxed text-muted">{drop.recommendation}</p></div></Card>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted"><Clock size={16} className="text-brand" /><span>Sample closing time: <span className="text-soft">{drop.endsIn}</span></span></div>
         </div>
-
-        {/* Rally & Pricing Panel */}
         <div className="space-y-5">
-          <Card className="p-5 space-y-5">
-            <div>
-              <div className="flex items-center justify-between">
-                <Badge variant="fire" size="md">
-                  Active Drop Rally
-                </Badge>
-                <span className="text-xs text-slate-500">Tier 3 in reach</span>
-              </div>
-              <h2 className="text-xl font-extrabold text-slate-900 mt-2">
-                {drop.title}
-              </h2>
-            </div>
-
-            {/* Progressive Pricing Progress */}
-            <DropProgress
-              tiers={drop.tiers}
-              currentParticipants={participants}
-              retailPrice={drop.retailPrice}
-            />
-
-            {/* Complete Tier Ladder Table */}
-            <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/60">
-              <span className="text-xs font-bold text-slate-700 block mb-2">
-                Tier Pricing Breakdown
-              </span>
-              <div className="space-y-1.5 text-xs">
-                {drop.tiers.map((tier) => {
-                  const isCurrent = participants >= tier.requiredParticipants
-                  return (
-                    <div
-                      key={tier.requiredParticipants}
-                      className={`flex items-center justify-between p-1.5 rounded-lg transition-colors ${
-                        isCurrent
-                          ? 'bg-emerald-50 text-emerald-800 font-semibold'
-                          : 'text-slate-500'
-                      }`}
-                    >
-                      <span className="flex items-center gap-1.5">
-                        {isCurrent ? (
-                          <CheckCircle2 size={13} className="text-emerald-600" />
-                        ) : (
-                          <span className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block" />
-                        )}
-                        {tier.requiredParticipants}+ Bros
-                      </span>
-                      <span>{formatCurrency(tier.price)}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* "I'm In" Interaction & Checkout CTA */}
-            <div className="space-y-2 pt-2">
-              <ImInButton
-                isJoined={isJoined}
-                onToggleJoin={handleToggleJoin}
-                size="lg"
-              />
-              <p className="text-[11px] text-center text-slate-400">
-                Tap 🔥 I'm In to join the rally. Pay when the lowest tier unlocks!
-              </p>
-
-              {isJoined && (
-                <Button
-                  variant="primary"
-                  size="md"
-                  className="w-full mt-2"
-                  onClick={() => navigate('/checkout')}
-                >
-                  Confirm Pre-Order at Current Price ({formatCurrency(drop.currentPrice)})
-                </Button>
-              )}
-            </div>
+          <Card className="space-y-6 p-5 sm:p-6">
+            <div><div className="mb-3 flex flex-wrap items-center justify-between gap-2"><Badge variant="brand">Active Drop</Badge><span className="flex items-center gap-1.5 text-xs text-muted"><Users size={14} /> {participants} people in</span></div><h1 className="text-2xl font-semibold leading-tight tracking-tight text-ink sm:text-3xl">{drop.title}</h1></div>
+            <DropProgress tiers={drop.tiers} currentParticipants={participants} retailPrice={drop.retailPrice} />
+            <div className="rounded-2xl border border-line bg-elevated p-4"><h2 className="mb-3 text-sm font-semibold text-ink">The group price ladder</h2><div className="space-y-2">{drop.tiers.map((tier) => { const unlocked = participants >= tier.requiredParticipants; const current = currentTier?.requiredParticipants === tier.requiredParticipants; return <div key={tier.requiredParticipants} className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm ${current ? 'bg-success-soft text-success' : unlocked ? 'text-soft' : 'text-muted'}`}><span className="flex items-center gap-2">{unlocked ? <CheckCircle2 size={16} /> : <span className="h-4 w-4 rounded-full border border-field-border" />}{tier.requiredParticipants}+ people {current && <span className="text-xs">(current)</span>}</span><span className="font-semibold tabular-nums">{formatCurrency(tier.price)}</span></div> })}</div></div>
+            <div className="space-y-3"><ImInButton isJoined={isJoined} onToggleJoin={toggleJoin} size="lg" /><p className="text-center text-xs leading-relaxed text-muted">Joining shows your interest. An order is placed separately at checkout.</p><Button variant="outline" className="w-full" onClick={() => { addItem(toCartItem(drop, currentPrice)); navigate('/cart') }}><ShoppingBag size={17} /> Add to cart · {formatCurrency(currentPrice)}</Button></div>
           </Card>
-
-          {/* Description */}
-          <div className="p-4 bg-white rounded-2xl border border-slate-200/80">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-              Product Story & Details
-            </h4>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              {drop.description}
-            </p>
-          </div>
+          <Card className="p-5"><h2 className="text-base font-semibold text-ink">About this find</h2><p className="mt-2 text-[15px] leading-relaxed text-muted">{drop.description}</p><div className="mt-4 flex items-start gap-2 border-t border-line pt-4 text-xs leading-relaxed text-muted"><Check size={16} className="shrink-0 text-brand" /> Prices and participation are demo data. Final availability and delivery details will come from the seller.</div></Card>
         </div>
       </div>
     </div>
   )
+}
+
+export default function DropDetailsPage() {
+  const { id } = useParams()
+  const drop = getDrop(id)
+  if (!drop) return <Card className="mx-auto max-w-lg p-8 text-center"><h1 className="text-xl font-semibold text-ink">This Drop is unavailable</h1><p className="my-3 text-sm text-muted">Explore the preview collection for another good find.</p><Link to="/explore" className="inline-flex min-h-11 items-center text-brand">Back to Explore</Link></Card>
+  return <DropView key={drop.id} drop={drop} />
 }

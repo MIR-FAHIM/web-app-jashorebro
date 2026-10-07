@@ -1,121 +1,42 @@
-import React, { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { PlusCircle, Heart, BookmarkPlus, Share2 } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Bookmark, Check, PlusCircle, ShoppingBag, Store, Users } from 'lucide-react'
 import { PageHeader } from '@/shared/patterns/PageHeader'
 import { Card } from '@/shared/ui/Card'
 import { Badge } from '@/shared/ui/Badge'
 import { Button } from '@/shared/ui/Button'
+import { useCart } from '@/features/cart/model/cartContext'
 import { formatCurrency } from '@/shared/lib/formatCurrency'
+import { getProduct, toCartItem } from '../mockCatalog'
 
-export default function ProductDetailsPage() {
-  const { id } = useParams()
+function ProductView({ product }) {
   const navigate = useNavigate()
+  const { addItem } = useCart()
   const [isPicked, setIsPicked] = useState(false)
-
-  const product = {
-    id: id || 'prod_1',
-    title: 'Redragon K552 Kumara RGB Mechanical Keyboard',
-    category: 'Tech & Gadgets',
-    retailPrice: 3200,
-    potentialDropPrice: 2699,
-    image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80',
-    description:
-      'Compact 87-key space-saving design with custom dustproof mechanical switches (Cherry Blue equivalent). Crisp tactile feedback and customizable RGB backlighting.',
-    seller: {
-      name: 'GadgetZone Jashore',
-      rating: '4.8',
-    },
-  }
+  const [isRequested, setIsRequested] = useState(false)
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4">
-      <PageHeader
-        title={product.title}
-        subtitle={`${product.category} • Sold by ${product.seller.name}`}
-        showBack
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/80">
-          <img
-            src={product.image}
-            alt={product.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
-
-        <div className="space-y-4">
-          <Card className="p-5 space-y-5">
-            <div>
-              <Badge variant="default" size="sm">
-                Catalog Item
-              </Badge>
-              <h2 className="text-xl font-extrabold text-slate-900 mt-2">
-                {product.title}
-              </h2>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-2xl font-black text-slate-900">
-                  {formatCurrency(product.retailPrice)}
-                </span>
-                <span className="text-xs text-slate-400">Regular retail price</span>
-              </div>
-            </div>
-
-            {/* Start a Drop Callout */}
-            <div className="p-4 rounded-xl bg-orange-50 border border-orange-200/60 space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-orange-700">
-                <span>Want this cheaper?</span>
-                <Badge variant="fire" size="sm">Save up to {formatCurrency(product.retailPrice - product.potentialDropPrice)}</Badge>
-              </div>
-              <p className="text-xs text-orange-950/80 leading-relaxed">
-                Start a community Drop for this product. If 15 people join, price unlocks at {formatCurrency(product.potentialDropPrice)}!
-              </p>
-              <Button
-                variant="drop-fire"
-                size="md"
-                className="w-full mt-2"
-                onClick={() => {
-                  alert('Created user drop! Ready to invite friends.')
-                  navigate('/explore')
-                }}
-              >
-                <PlusCircle size={16} />
-                <span>Start a Drop for {formatCurrency(product.potentialDropPrice)}</span>
-              </Button>
-            </div>
-
-            {/* Shelf recommendation & Buy Solo */}
-            <div className="grid grid-cols-2 gap-2 pt-2">
-              <Button
-                variant={isPicked ? 'secondary' : 'outline'}
-                size="md"
-                className="text-xs"
-                onClick={() => setIsPicked(!isPicked)}
-              >
-                <BookmarkPlus size={15} />
-                <span>{isPicked ? 'On My Picks ✓' : 'Add to My Picks'}</span>
-              </Button>
-              <Button
-                variant="secondary"
-                size="md"
-                className="text-xs"
-                onClick={() => navigate('/checkout')}
-              >
-                Buy Solo ({formatCurrency(product.retailPrice)})
-              </Button>
-            </div>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <PageHeader title="Product details" subtitle="A new possibility for your rotation." showBack />
+      <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
+        <div className="relative aspect-square overflow-hidden rounded-3xl border border-line bg-elevated"><img src={product.image} alt={product.title} className="h-full w-full object-cover" /><span className="absolute left-4 top-4"><Badge>{product.category}</Badge></span></div>
+        <div className="space-y-5">
+          <Card className="space-y-6 p-5 sm:p-6">
+            <div><Badge variant="default">From the catalog</Badge><h1 className="mt-3 text-2xl font-semibold leading-tight tracking-tight text-ink sm:text-3xl">{product.title}</h1><p className="mt-3 flex items-center gap-2 text-sm text-muted"><Store size={16} /> {product.seller.name}</p><div className="mt-5 border-t border-line pt-5"><p className="text-xs text-muted">Regular price</p><p className="mt-1 text-3xl font-semibold tracking-tight text-ink">{formatCurrency(product.retailPrice)}</p></div></div>
+            <Button className="w-full" onClick={() => { addItem(toCartItem(product)); navigate('/cart') }}><ShoppingBag size={18} /> Add to cart</Button>
+            <Button variant={isPicked ? 'secondary' : 'outline'} className="w-full" onClick={() => setIsPicked(!isPicked)} aria-pressed={isPicked}>{isPicked ? <Check size={17} /> : <Bookmark size={17} />}{isPicked ? 'Saved to My Picks in this preview' : 'Save to My Picks'}</Button>
+            <div className="rounded-2xl border border-brand/20 bg-brand-soft p-4"><div className="flex items-center gap-2 text-brand"><Users size={18} /><h2 className="text-base font-semibold">Better together?</h2></div><p className="mt-2 text-sm leading-relaxed text-soft">Show interest in a community Drop. Group pricing will depend on the seller’s offer.</p><Button variant="outline" className="mt-4 w-full border-brand/30 text-brand" onClick={() => setIsRequested(!isRequested)} aria-pressed={isRequested}>{isRequested ? <Check size={17} /> : <PlusCircle size={17} />}{isRequested ? 'Interest noted in this preview' : 'I want a Drop for this'}</Button></div>
           </Card>
-
-          <div className="p-4 bg-white rounded-2xl border border-slate-200/80">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-              Specifications
-            </h4>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              {product.description}
-            </p>
-          </div>
+          <Card className="p-5"><h2 className="text-base font-semibold text-ink">The details</h2><p className="mt-2 text-[15px] leading-relaxed text-muted">{product.description}</p><p className="mt-4 border-t border-line pt-4 text-xs leading-relaxed text-muted">Preview product. Images are illustrative; final options and availability will come from the seller.</p></Card>
         </div>
       </div>
     </div>
   )
+}
+
+export default function ProductDetailsPage() {
+  const { id } = useParams()
+  const product = getProduct(id)
+  if (!product) return <Card className="mx-auto max-w-lg p-8 text-center"><h1 className="text-xl font-semibold text-ink">This product is unavailable</h1><p className="my-3 text-sm text-muted">Browse the catalog for another good find.</p><Link to="/explore" className="inline-flex min-h-11 items-center text-brand">Back to Explore</Link></Card>
+  return <ProductView key={product.id} product={product} />
 }

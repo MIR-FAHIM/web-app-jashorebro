@@ -1,74 +1,40 @@
-import React from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Flame, Bell, Search, ShieldCheck } from 'lucide-react'
+import { Flame, Search, ShoppingBag } from 'lucide-react'
 import { useAuth } from '@/features/auth/model/authContext'
+import { useCart } from '@/features/cart/model/cartContext'
 import { Avatar } from '@/shared/ui/Avatar'
 
 export function ConsumerHeader() {
   const { user } = useAuth()
+  const { itemCount } = useCart()
+  const [query, setQuery] = useState('')
   const navigate = useNavigate()
 
+  const search = (event) => {
+    event.preventDefault()
+    navigate(`/explore?q=${encodeURIComponent(query.trim())}`)
+  }
+
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-slate-200/80">
-      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-        {/* Brand / Logo */}
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-orange-600 to-red-500 flex items-center justify-center text-white shadow-sm shadow-orange-500/30 group-hover:scale-105 transition-transform">
-            <Flame size={18} className="fill-white" />
-          </div>
-          <span className="font-extrabold text-base tracking-tight text-slate-900">
-            Jashore<span className="text-[var(--color-brand)]">Bro</span>
-          </span>
+    <header className="sticky top-0 z-40 border-b border-line bg-canvas/90 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6">
+        <Link to="/" className="flex shrink-0 items-center gap-2" aria-label="JashoreBro home">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-brand text-on-brand"><Flame size={21} strokeWidth={2.5} /></span>
+          <span className="text-base font-bold tracking-tight text-ink">Jashore<span className="text-brand">Bro</span></span>
         </Link>
-
-        {/* Search bar on desktop */}
-        <div className="hidden md:flex flex-1 max-w-md mx-4">
-          <div className="w-full relative">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search drops, products, tastemakers..."
-              className="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-100/80 border border-transparent rounded-full focus:bg-white focus:border-slate-300 focus:outline-none transition-all"
-            />
-          </div>
-        </div>
-
-        {/* Action icons */}
-        <div className="flex items-center gap-2.5">
-          {/* Quick link to admin (for development / staff convenience) */}
-          <Link
-            to="/admin"
-            className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-slate-900 px-2.5 py-1 rounded-lg hover:bg-slate-100 transition-colors"
-            title="Switch to Admin Portal"
-          >
-            <ShieldCheck size={14} className="text-slate-400" />
-            <span>Admin</span>
+        <form onSubmit={search} role="search" className="relative mx-4 hidden w-full max-w-md md:block">
+          <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+          <input aria-label="Search products and drops" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find your next favorite" className="min-h-11 w-full rounded-xl border border-line bg-surface py-2.5 pl-11 pr-14 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none" />
+          <button type="submit" aria-label="Submit search" className="absolute right-1 top-0.5 flex size-10 items-center justify-center rounded-lg text-muted hover:bg-elevated"><Search size={16} /></button>
+        </form>
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
+          <Link to="/explore" aria-label="Search products" className="flex size-11 items-center justify-center rounded-xl text-muted hover:bg-elevated hover:text-ink md:hidden"><Search size={20} /></Link>
+          <Link to="/cart" aria-label={`Cart, ${itemCount} items`} className="relative flex size-11 items-center justify-center rounded-xl text-soft hover:bg-elevated">
+            <ShoppingBag size={21} />
+            {itemCount > 0 && <span className="absolute right-0.5 top-0.5 flex min-w-4.5 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold text-on-brand">{itemCount > 99 ? '99+' : itemCount}</span>}
           </Link>
-
-          <button
-            onClick={() => navigate('/explore')}
-            className="md:hidden p-2 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100"
-            aria-label="Search"
-          >
-            <Search size={18} />
-          </button>
-
-          <button
-            onClick={() => navigate('/activity')}
-            className="p-2 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 relative"
-            aria-label="Notifications"
-          >
-            <Bell size={18} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          </button>
-
-          <Link to="/profile">
-            <Avatar
-              name={user?.name || 'Guest'}
-              size="sm"
-              className="ring-2 ring-transparent hover:ring-[var(--color-brand)] transition-all"
-            />
-          </Link>
+          <Link to={user ? '/profile' : '/auth'} aria-label={user ? 'Your profile' : 'Sign in'} className="flex size-11 items-center justify-center rounded-xl hover:bg-elevated"><Avatar name={user?.name || 'Guest'} size="sm" /></Link>
         </div>
       </div>
     </header>
