@@ -13,6 +13,9 @@ const CheckoutPage = lazy(() => import('./pages/checkout/CheckoutPage'))
 const CartPage = lazy(() => import('./pages/cart/CartPage'))
 const FriendsHubPage = lazy(() => import('./pages/friends/FriendsHubPage'))
 const UserProfilePage = lazy(() => import('./pages/profile/UserProfilePage'))
+const SellersDirectoryPage = lazy(() => import('./pages/sellers/SellersDirectoryPage'))
+const SellerStorefrontPage = lazy(() => import('./pages/sellers/SellerStorefrontPage'))
+const SellerApplyPage = lazy(() => import('./pages/sellers/SellerApplyPage'))
 const AuthScreen = lazy(() =>
   import('@/features/auth/components/AuthScreen').then((m) => ({ default: m.AuthScreen }))
 )
@@ -25,6 +28,9 @@ export const consumerRoutes = (
       <Route path="/explore" element={<ExplorePage />} />
       <Route path="/drops/:id" element={<DropDetailsPage />} />
       <Route path="/products/:id" element={<ProductDetailsPage />} />
+      <Route path="/merchants" element={<SellersDirectoryPage />} />
+      <Route path="/merchants/:slug" element={<SellerStorefrontPage />} />
+      <Route path="/merchant/apply" element={<SellerApplyPage />} />
       <Route path="/friends" element={<FriendsHubPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/profile/:username" element={<UserProfilePage />} />
@@ -32,6 +38,7 @@ export const consumerRoutes = (
       <Route path="/activity" element={<ActivityPage />} />
       <Route path="/cart" element={<CartPage />} />
     </Route>
+
 
 
     {/* Focused Flows (Checkout, Auth, Login, Register) without Bottom Navigation */}
