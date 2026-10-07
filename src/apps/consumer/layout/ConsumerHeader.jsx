@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Flame, Search, ShoppingBag } from 'lucide-react'
+import { Flame, Search, ShoppingBag, Users } from 'lucide-react'
 import { useAuth } from '@/features/auth/model/authContext'
 import { useCart } from '@/features/cart/model/cartContext'
+import { useFriends } from '@/features/friends/model/friendsContext'
 import { Avatar } from '@/shared/ui/Avatar'
 
 export function ConsumerHeader() {
   const { user } = useAuth()
   const { itemCount } = useCart()
+  const { incomingCount } = useFriends()
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
 
@@ -30,6 +32,19 @@ export function ConsumerHeader() {
         </form>
         <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
           <Link to="/explore" aria-label="Search products" className="flex size-11 items-center justify-center rounded-xl text-muted hover:bg-elevated hover:text-ink md:hidden"><Search size={20} /></Link>
+          <Link
+            to="/friends"
+            aria-label={`Friends, ${incomingCount} requests`}
+            className="relative flex size-11 items-center justify-center rounded-xl text-soft hover:bg-elevated"
+            title="Friends & Connections"
+          >
+            <Users size={20} />
+            {incomingCount > 0 && (
+              <span className="absolute right-0.5 top-0.5 flex size-4 items-center justify-center rounded-full bg-brand text-[9px] font-bold text-on-brand animate-pulse">
+                {incomingCount > 9 ? '9+' : incomingCount}
+              </span>
+            )}
+          </Link>
           <Link to="/cart" aria-label={`Cart, ${itemCount} items`} className="relative flex size-11 items-center justify-center rounded-xl text-soft hover:bg-elevated">
             <ShoppingBag size={21} />
             {itemCount > 0 && <span className="absolute right-0.5 top-0.5 flex min-w-4.5 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold text-on-brand">{itemCount > 99 ? '99+' : itemCount}</span>}
@@ -40,3 +55,4 @@ export function ConsumerHeader() {
     </header>
   )
 }
+

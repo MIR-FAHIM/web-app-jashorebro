@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowUpRight, Bookmark, Check, LogOut, MapPin, Phone, Plus, Share2, Wallet } from 'lucide-react'
+import { ArrowUpRight, Bookmark, Check, LogOut, MapPin, Phone, Plus, Share2, Users, Wallet } from 'lucide-react'
 import { Card } from '@/shared/ui/Card'
 import { Badge } from '@/shared/ui/Badge'
 import { Button } from '@/shared/ui/Button'
@@ -9,6 +9,7 @@ import { Dialog } from '@/shared/ui/Dialog'
 import { calculateDropTier } from '@/features/drops/model/dropStatuses'
 import { useDropInterests } from '@/features/drops/model/useDropInterest'
 import { useAuth } from '@/features/auth/model/authContext'
+import { useFriends } from '@/features/friends/model/friendsContext'
 import { formatCurrency } from '@/shared/lib/formatCurrency'
 import { MOCK_DROPS } from '../mockCatalog'
 
@@ -16,6 +17,8 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const { user, isAuthenticated, logout } = useAuth()
+  const { friends } = useFriends()
+
   const [activeTab, setActiveTab] = useState('picks')
   const [shareMessage, setShareMessage] = useState('')
   const [withdrawOpen, setWithdrawOpen] = useState(false)
@@ -113,11 +116,25 @@ export default function ProfilePage() {
             <p className="mt-3 flex items-center gap-1.5 text-xs text-muted"><MapPin size={14} /> Jashore, Bangladesh</p>
           </div>
           {shareMessage && <p role="status" className="mt-3 text-sm text-brand">{shareMessage}</p>}
-          <div className={`mt-6 grid gap-3 border-t border-line pt-5 ${isPublicProfile ? 'grid-cols-2' : 'grid-cols-3'}`}>
-            <div><p className="text-xl font-semibold text-ink">{picks.length}</p><p className="mt-1 text-xs text-muted">Curated picks</p></div>
-            <div><p className="text-xl font-semibold text-ink">{isNabila ? 24 : 42}</p><p className="mt-1 text-xs text-muted">Sample attributed buys</p></div>
-            {!isPublicProfile && <div><p className="text-xl font-semibold text-success">{formatCurrency(curator.walletBalance)}</p><p className="mt-1 text-xs text-muted">Sample rewards</p></div>}
+          <div className="mt-6 grid grid-cols-3 gap-3 border-t border-line pt-5 text-center">
+            <Link to="/friends" className="p-2 rounded-xl hover:bg-slate-50 transition-colors block">
+              <p className="text-xl font-bold text-ink">{friends.length}</p>
+              <p className="mt-0.5 text-xs text-muted flex items-center justify-center gap-1 font-medium">
+                <Users size={12} /> Friends
+              </p>
+            </Link>
+            <div className="p-2 rounded-xl">
+              <p className="text-xl font-bold text-ink">{picks.length}</p>
+              <p className="mt-0.5 text-xs text-muted">Curated picks</p>
+            </div>
+            {!isPublicProfile && (
+              <div className="p-2 rounded-xl">
+                <p className="text-xl font-bold text-success">{formatCurrency(curator.walletBalance)}</p>
+                <p className="mt-0.5 text-xs text-muted">Rewards</p>
+              </div>
+            )}
           </div>
+
         </div>
       </Card>
       {!isPublicProfile && (
