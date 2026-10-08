@@ -18,10 +18,14 @@ function resolveUrl(endpoint) {
  */
 export async function apiClient(endpoint, { data, method = 'GET', headers = {}, ...customConfig } = {}) {
   const token = localStorage.getItem('jb_auth_token')
+  const isFormData = typeof FormData !== 'undefined' && data instanceof FormData
 
   const defaultHeaders = {
-    'Content-Type': 'application/json',
     Accept: 'application/json',
+  }
+
+  if (!isFormData) {
+    defaultHeaders['Content-Type'] = 'application/json'
   }
 
   if (token) {
@@ -37,8 +41,8 @@ export async function apiClient(endpoint, { data, method = 'GET', headers = {}, 
     ...customConfig,
   }
 
-  if (data) {
-    config.body = JSON.stringify(data)
+  if (data !== undefined) {
+    config.body = isFormData ? data : JSON.stringify(data)
   }
 
   try {
