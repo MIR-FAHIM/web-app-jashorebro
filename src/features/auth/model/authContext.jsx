@@ -46,6 +46,11 @@ export function AuthProvider({ children }) {
     setUser(data.user)
     localStorage.setItem('jb_auth_token', data.token)
     localStorage.setItem('jb_auth_user', JSON.stringify(data.user))
+    sessionStorage.setItem('jb_login_welcome_pending', 'true')
+    sessionStorage.removeItem('jb_login_welcome_dismissed')
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('jb:login-success', { detail: data.user }))
+    }
     return data.user
   }
 
@@ -54,6 +59,11 @@ export function AuthProvider({ children }) {
     setUser(data.user)
     localStorage.setItem('jb_auth_token', data.token)
     localStorage.setItem('jb_auth_user', JSON.stringify(data.user))
+    sessionStorage.setItem('jb_login_welcome_pending', 'true')
+    sessionStorage.removeItem('jb_login_welcome_dismissed')
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('jb:login-success', { detail: data.user }))
+    }
     return data.user
   }
 
@@ -68,6 +78,14 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('jb_auth_user')
   }
 
+  const updateUser = (updatedUser) => {
+    setUser((prev) => {
+      const merged = { ...prev, ...updatedUser }
+      localStorage.setItem('jb_auth_user', JSON.stringify(merged))
+      return merged
+    })
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -77,6 +95,7 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
+        updateUser,
       }}
     >
       {children}

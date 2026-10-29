@@ -16,6 +16,7 @@ import {
   Tag,
 } from 'lucide-react'
 import { Dialog } from '@/shared/ui/Dialog'
+import { UI_FEATURES } from '@/shared/config/features'
 import { Button } from '@/shared/ui/Button'
 import { Badge } from '@/shared/ui/Badge'
 import { formatCurrency } from '@/shared/lib/formatCurrency'
@@ -72,6 +73,14 @@ export function ProductFormModal({ isOpen, onClose, productToEdit, onSaved }) {
     cancellation_cutoff_hours: '24',
     weight_kg: '',
     tags: '',
+    is_recommendation_enabled: true,
+    recommendation_commission: '20',
+    is_community_shop_enabled: true,
+    supplier_allocation_price: '',
+    min_selling_price: '',
+    max_selling_price: '',
+    platform_fee_percent: '5',
+    is_group_drop_enabled: true,
   })
 
   // Specifications state: [{ attribute_id, attribute_item_id, custom_value }]
@@ -128,6 +137,14 @@ export function ProductFormModal({ isOpen, onClose, productToEdit, onSaved }) {
         cancellation_cutoff_hours: productToEdit.cancellation_cutoff_hours !== undefined ? String(productToEdit.cancellation_cutoff_hours) : '24',
         weight_kg: productToEdit.weight_kg !== undefined ? String(productToEdit.weight_kg) : '',
         tags: Array.isArray(productToEdit.tags) ? productToEdit.tags.join(', ') : '',
+        is_recommendation_enabled: productToEdit.is_recommendation_enabled ?? true,
+        recommendation_commission: productToEdit.recommendation_commission !== undefined ? String(productToEdit.recommendation_commission) : '20',
+        is_community_shop_enabled: productToEdit.is_community_shop_enabled ?? true,
+        supplier_allocation_price: productToEdit.supplier_allocation_price !== undefined ? String(productToEdit.supplier_allocation_price) : '',
+        min_selling_price: productToEdit.min_selling_price !== undefined ? String(productToEdit.min_selling_price) : '',
+        max_selling_price: productToEdit.max_selling_price !== undefined ? String(productToEdit.max_selling_price) : '',
+        platform_fee_percent: productToEdit.platform_fee_percent !== undefined ? String(productToEdit.platform_fee_percent) : '5',
+        is_group_drop_enabled: productToEdit.is_group_drop_enabled ?? true,
       })
 
       setExistingImages(productToEdit.images || [])
@@ -349,6 +366,14 @@ export function ProductFormModal({ isOpen, onClose, productToEdit, onSaved }) {
         cancellation_cutoff_hours: Number(form.cancellation_cutoff_hours) || 24,
         weight_kg: form.weight_kg !== '' ? Number(form.weight_kg) : null,
         tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+        is_recommendation_enabled: Boolean(form.is_recommendation_enabled),
+        recommendation_commission: form.recommendation_commission !== '' ? Number(form.recommendation_commission) : 0,
+        is_community_shop_enabled: Boolean(form.is_community_shop_enabled),
+        supplier_allocation_price: form.supplier_allocation_price !== '' ? Number(form.supplier_allocation_price) : null,
+        min_selling_price: form.min_selling_price !== '' ? Number(form.min_selling_price) : null,
+        max_selling_price: form.max_selling_price !== '' ? Number(form.max_selling_price) : null,
+        platform_fee_percent: form.platform_fee_percent !== '' ? Number(form.platform_fee_percent) : 5,
+        is_group_drop_enabled: Boolean(form.is_group_drop_enabled),
         specification_attributes: specifications,
         variants: variants.map((v) => ({
           id: v.id,
@@ -413,6 +438,7 @@ export function ProductFormModal({ isOpen, onClose, productToEdit, onSaved }) {
             { id: 'pricing', label: '2. Pricing & Flags', icon: DollarSign },
             { id: 'media', label: '3. Media & Photos', icon: Upload },
             { id: 'variants', label: '4. Variants & Specs', icon: Layers },
+            { id: 'community', label: '5. Community Commerce', icon: Sparkles },
           ].map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -1015,6 +1041,153 @@ export function ProductFormModal({ isOpen, onClose, productToEdit, onSaved }) {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* TAB 5: Community Commerce Engine */}
+        {activeTab === 'community' && (
+          <div className="space-y-5">
+            {/* Recommendation Rules */}
+            <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-white text-sm">Product Recommendation Engine</h4>
+                  <p className="text-slate-400 text-xs">Allow users to curate and share 7-day referral codes</p>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.is_recommendation_enabled}
+                    onChange={(e) => setForm((p) => ({ ...p, is_recommendation_enabled: e.target.checked }))}
+                    className="size-4 rounded bg-slate-950 border-slate-700 text-orange-500"
+                  />
+                  <span className="font-semibold text-slate-200">Enable Recommendations</span>
+                </label>
+              </div>
+
+              {form.is_recommendation_enabled && (
+                <div className="pt-2 border-t border-slate-800">
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Fixed Recommender Commission (BDT per unit sold) *
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.recommendation_commission}
+                    onChange={(e) => setForm((p) => ({ ...p, recommendation_commission: e.target.value }))}
+                    className="w-full max-w-xs bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white"
+                    placeholder="e.g. 20"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Funded from catalog retail spread upon successful delivery.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Community Storefront Rules */}
+            {UI_FEATURES.personalStores && <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-white text-sm">Community Storefront Showcase</h4>
+                  <p className="text-slate-400 text-xs">Permit community sellers to list and markup this product</p>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.is_community_shop_enabled}
+                    onChange={(e) => setForm((p) => ({ ...p, is_community_shop_enabled: e.target.checked }))}
+                    className="size-4 rounded bg-slate-950 border-slate-700 text-orange-500"
+                  />
+                  <span className="font-semibold text-slate-200">Enable in Community Stores</span>
+                </label>
+              </div>
+
+              {form.is_community_shop_enabled && (
+                <div className="pt-3 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">
+                      Supplier Allocation Price (BDT)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={form.supplier_allocation_price}
+                      onChange={(e) => setForm((p) => ({ ...p, supplier_allocation_price: e.target.value }))}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white"
+                      placeholder="Wholesale base"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">
+                      Min Retail Price (BDT)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={form.min_selling_price}
+                      onChange={(e) => setForm((p) => ({ ...p, min_selling_price: e.target.value }))}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white"
+                      placeholder="Floor price"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">
+                      Max Retail Price (BDT)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={form.max_selling_price}
+                      onChange={(e) => setForm((p) => ({ ...p, max_selling_price: e.target.value }))}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white"
+                      placeholder="Cap price"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">
+                      Platform Fee % on Markup
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={form.platform_fee_percent}
+                      onChange={(e) => setForm((p) => ({ ...p, platform_fee_percent: e.target.value }))}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white"
+                      placeholder="e.g. 5"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>}
+
+            {/* Group Drop Organizer Rules */}
+            <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-white text-sm">Community Volume Drops</h4>
+                  <p className="text-slate-400 text-xs">Allow users to organize neighborhood bulk buying drops</p>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.is_group_drop_enabled}
+                    onChange={(e) => setForm((p) => ({ ...p, is_group_drop_enabled: e.target.checked }))}
+                    className="size-4 rounded bg-slate-950 border-slate-700 text-orange-500"
+                  />
+                  <span className="font-semibold text-slate-200">Enable Group Drops</span>
+                </label>
+              </div>
+            </div>
           </div>
         )}
 

@@ -1,14 +1,14 @@
 import { apiClient } from '@/shared/api/apiClient'
 
 /**
- * Auth API Service calling the Laravel endpoints
+ * Auth API Service calling activity-based endpoints
  */
 export const authApi = {
   /**
    * Login with phone and password.
    */
   async login({ phone, password }) {
-    const res = await apiClient('/auth/login', {
+    const res = await apiClient('/auth/login-user', {
       method: 'POST',
       data: { phone, password },
     })
@@ -19,7 +19,7 @@ export const authApi = {
    * Register with mobile number and password.
    */
   async register({ name, username, phone, password, email }) {
-    const res = await apiClient('/auth/register', {
+    const res = await apiClient('/auth/register-user', {
       method: 'POST',
       data: { name, username, phone, password, email },
     })
@@ -30,7 +30,7 @@ export const authApi = {
    * Send phone OTP challenge.
    */
   async sendOtp({ phone, purpose = 'phone_verification' }) {
-    const res = await apiClient('/auth/otp/send', {
+    const res = await apiClient('/auth/send-otp', {
       method: 'POST',
       data: { phone, purpose },
     })
@@ -41,7 +41,7 @@ export const authApi = {
    * Verify phone OTP challenge.
    */
   async verifyOtp({ phone, code, purpose = 'phone_verification' }) {
-    const res = await apiClient('/auth/otp/verify', {
+    const res = await apiClient('/auth/verify-otp', {
       method: 'POST',
       data: { phone, code, purpose },
     })
@@ -52,7 +52,7 @@ export const authApi = {
    * Fetch current authenticated user.
    */
   async getMe() {
-    const res = await apiClient('/auth/me')
+    const res = await apiClient('/auth/get-current-user')
     return res.data.user
   },
 
@@ -60,6 +60,6 @@ export const authApi = {
    * Log out and revoke access token.
    */
   async logout() {
-    return apiClient('/auth/logout', { method: 'POST' })
+    return apiClient('/auth/logout-user', { method: 'POST' })
   },
 }

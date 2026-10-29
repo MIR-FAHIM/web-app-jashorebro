@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '../lib/cn'
 
 const sizeStyles = {
@@ -17,6 +17,10 @@ export function Avatar({
   className,
 }) {
   const [hasError, setHasError] = useState(false)
+
+  useEffect(() => {
+    setHasError(false)
+  }, [src])
 
   const getInitials = (str) => {
     if (!str) return 'JB'

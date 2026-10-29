@@ -1,4 +1,5 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import logoBanner from '@/assets/jashorebrobannerlogo.png'
 import {
   LayoutDashboard,
   Flame,
@@ -12,6 +13,12 @@ import {
   LogOut,
   Shield,
   Layers,
+  FileText,
+  Bell,
+  CreditCard,
+  Wallet,
+  TrendingUp,
+  FolderTree,
 } from 'lucide-react'
 import { cn } from '@/shared/lib/cn'
 import { ModalFrame } from '@/shared/ui/ModalFrame'
@@ -19,6 +26,7 @@ import { useIsDesktop } from '@/shared/hooks/useMediaQuery'
 import { useAuth } from '@/features/auth/model/authContext'
 import { Avatar } from '@/shared/ui/Avatar'
 import { Badge } from '@/shared/ui/Badge'
+import { UI_FEATURES } from '@/shared/config/features'
 
 const navGroups = [
   {
@@ -30,9 +38,19 @@ const navGroups = [
   {
     title: 'Commerce & Drops',
     items: [
+      { to: '/admin/pos', label: 'Point of Sale (POS)', icon: CreditCard },
       { to: '/admin/drops', label: 'Drops Engine', icon: Flame },
       { to: '/admin/catalog', label: 'Product Catalog', icon: ShoppingBag },
+      { to: '/admin/categories', label: 'Categories', icon: FolderTree },
       { to: '/admin/orders', label: 'Orders & Dispatch', icon: Package },
+    ],
+  },
+  {
+    title: 'Community Commerce',
+    items: [
+      ...(UI_FEATURES.personalStores ? [{ to: '/admin/community-shops', label: 'Community Stores', icon: Store }] : []),
+      { to: '/admin/payouts', label: 'Payout Requests', icon: Wallet },
+      { to: '/admin/settlement', label: 'Settlement & GMV', icon: TrendingUp },
     ],
   },
   {
@@ -42,6 +60,8 @@ const navGroups = [
       { to: '/admin/users', label: 'Users & Curators', icon: Users },
       { to: '/admin/rewards', label: 'Wallets & Rewards', icon: Award },
       { to: '/admin/moderation', label: 'Review & Flags', icon: ShieldAlert },
+      { to: '/admin/logs', label: 'Activity & Audit Logs', icon: FileText },
+      { to: '/admin/notifications', label: 'System Notifications', icon: Bell },
     ],
   },
 ]
@@ -59,17 +79,9 @@ function SidebarContent({ onClose }) {
     <div className="flex h-full min-h-0 flex-col bg-slate-900 text-slate-100 border-r border-slate-800">
       {/* Brand Header */}
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800/80 px-5">
-        <div className="flex items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-tr from-orange-600 to-red-500 text-white shadow-md shadow-orange-600/30">
-            <Flame size={20} className="fill-white" />
-          </span>
-          <div>
-            <p className="font-extrabold text-sm text-white tracking-tight leading-none">
-              Jashore<span className="text-orange-500">Bro</span>
-            </p>
-            <p className="text-[10px] text-slate-400 mt-0.5 font-medium">Control Center</p>
-          </div>
-        </div>
+        <Link to="/admin" className="flex items-center gap-2" aria-label="JashoreBro Admin Dashboard">
+          <img src={logoBanner} alt="JashoreBro" className="h-8 w-auto object-contain" />
+        </Link>
 
         <Badge variant="unlocked" size="sm" className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-[10px]">
           Live
@@ -139,7 +151,7 @@ function SidebarContent({ onClose }) {
           className="flex min-h-9 items-center justify-center gap-2 rounded-xl border border-slate-700/60 px-3 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
         >
           <ArrowLeft size={14} />
-          <span>Go to Customer Storefront</span>
+          <span>Go to Consumer App</span>
         </NavLink>
       </div>
     </div>

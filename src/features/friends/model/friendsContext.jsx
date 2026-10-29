@@ -1,69 +1,80 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { friendsApi } from '../api/friendsApi'
 import { useAuth } from '@/features/auth/model/authContext'
 
 const FriendsContext = createContext(null)
 
 export function FriendsProvider({ children }) {
-  const { isAuthenticated } = useAuth()
-  const [incomingCount, setIncomingCount] = useState(0)
-  const [incomingRequests, setIncomingRequests] = useState([])
-  const [outgoingRequests, setOutgoingRequests] = useState([])
-  const [friends, setFriends] = useState([])
-  const [isLoadingRequests, setIsLoadingRequests] = useState(false)
-  const [isLoadingFriends, setIsLoadingFriends] = useState(false)
+  const { user, isAuthenticated, isLoading: isLoadingAuth } = useAuth()
+  const accountKey = !isLoadingAuth && isAuthenticated ? String(user.id ?? user.username ?? 'authenticated') : null
+  const activeAccount = useRef(accountKey)
+  const friendsRequest = useRef(0)
+  const requestsRequest = useRef(0)
+  const [friendsState, setFriendsState] = useState({ accountKey: null, items: [], isLoading: false, hasLoaded: false, error: '' })
+  const [requestsState, setRequestsState] = useState({ accountKey: null, incoming: [], outgoing: [], count: 0, isLoading: false, hasLoaded: false, error: '' })
+
+  // Invalidate in-flight responses on sign-out, account changes, and unmount.
+  useEffect(() => {
+    activeAccount.current = accountKey
+    return () => {
+      activeAccount.current = null
+      friendsRequest.current += 1
+      requestsRequest.current += 1
+    }
+  }, [accountKey])
 
   // Refresh pending requests and badge count
   const refreshRequests = useCallback(async () => {
-    if (!isAuthenticated) {
-      setIncomingCount(0)
-      setIncomingRequests([])
-      setOutgoingRequests([])
-      return
-    }
+    if (!accountKey || activeAccount.current !== accountKey) return
 
+    const requestId = ++requestsRequest.current
+    setRequestsState((previous) => ({
+      ...(previous.accountKey === accountKey ? previous : { accountKey, incoming: [], outgoing: [], count: 0, hasLoaded: false }),
+      isLoading: true,
+      error: '',
+    }))
     try {
-      setIsLoadingRequests(true)
       const data = await friendsApi.getRequests()
-      setIncomingRequests(data.incoming || [])
-      setOutgoingRequests(data.outgoing || [])
-      setIncomingCount(data.incoming_count || 0)
+      if (requestsRequest.current !== requestId || activeAccount.current !== accountKey) return
+      setRequestsState({ accountKey, incoming: data.incoming || [], outgoing: data.outgoing || [], count: data.incoming_count || 0, isLoading: false, hasLoaded: true, error: '' })
     } catch {
-      // Quiet fail if network error
-    } finally {
-      setIsLoadingRequests(false)
+      if (requestsRequest.current !== requestId || activeAccount.current !== accountKey) return
+      setRequestsState((previous) => ({ ...previous, isLoading: false, error: 'We couldn’t load your friend requests. Please try again.' }))
     }
-  }, [isAuthenticated])
+  }, [accountKey])
 
   // Refresh friends list
   const refreshFriends = useCallback(async (query = '') => {
-    if (!isAuthenticated) {
-      setFriends([])
-      return
-    }
+    if (!accountKey || activeAccount.current !== accountKey) return
 
+    const requestId = ++friendsRequest.current
+    setFriendsState((previous) => ({
+      ...(previous.accountKey === accountKey ? previous : { accountKey, items: [], hasLoaded: false }),
+      isLoading: true,
+      error: '',
+    }))
     try {
-      setIsLoadingFriends(true)
       const res = await friendsApi.getFriends({ query })
-      setFriends(res.data || [])
+      if (friendsRequest.current !== requestId || activeAccount.current !== accountKey) return
+      setFriendsState({ accountKey, items: res.data || [], isLoading: false, hasLoaded: true, error: '' })
     } catch {
-      // Quiet fail
-    } finally {
-      setIsLoadingFriends(false)
+      if (friendsRequest.current !== requestId || activeAccount.current !== accountKey) return
+      setFriendsState((previous) => ({ ...previous, isLoading: false, error: 'We couldn’t load your friends. Please try again.' }))
     }
-  }, [isAuthenticated])
+  }, [accountKey])
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (accountKey) {
       refreshRequests()
       refreshFriends()
     } else {
-      setIncomingCount(0)
-      setIncomingRequests([])
-      setOutgoingRequests([])
-      setFriends([])
+      setFriendsState({ accountKey: null, items: [], isLoading: false, hasLoaded: false, error: '' })
+      setRequestsState({ accountKey: null, incoming: [], outgoing: [], count: 0, isLoading: false, hasLoaded: false, error: '' })
     }
-  }, [isAuthenticated, refreshRequests, refreshFriends])
+  }, [accountKey, refreshRequests, refreshFriends])
+
+  const ownsFriends = accountKey !== null && friendsState.accountKey === accountKey
+  const ownsRequests = accountKey !== null && requestsState.accountKey === accountKey
 
   // Send friend request
   const sendRequest = async ({ recipient_id, username }) => {
@@ -103,12 +114,16 @@ export function FriendsProvider({ children }) {
   return (
     <FriendsContext.Provider
       value={{
-        friends,
-        incomingRequests,
-        outgoingRequests,
-        incomingCount,
-        isLoadingFriends,
-        isLoadingRequests,
+        friends: ownsFriends ? friendsState.items : [],
+        incomingRequests: ownsRequests ? requestsState.incoming : [],
+        outgoingRequests: ownsRequests ? requestsState.outgoing : [],
+        incomingCount: ownsRequests ? requestsState.count : 0,
+        isLoadingFriends: ownsFriends && friendsState.isLoading,
+        isLoadingRequests: ownsRequests && requestsState.isLoading,
+        hasLoadedFriends: ownsFriends && friendsState.hasLoaded,
+        hasLoadedRequests: ownsRequests && requestsState.hasLoaded,
+        friendsError: ownsFriends ? friendsState.error : '',
+        requestsError: ownsRequests ? requestsState.error : '',
         refreshRequests,
         refreshFriends,
         sendRequest,

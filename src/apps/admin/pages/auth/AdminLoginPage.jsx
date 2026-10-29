@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom'
-import { Flame, Shield, Lock, Phone, ArrowRight, AlertCircle, ArrowLeft } from 'lucide-react'
+import { Shield, Lock, Phone, ArrowRight, AlertCircle, ArrowLeft } from 'lucide-react'
+import logoBanner from '@/assets/jashorebrobannerlogo.png'
 import { Card } from '@/shared/ui/Card'
 import { Input } from '@/shared/ui/Input'
 import { Button } from '@/shared/ui/Button'
@@ -53,23 +54,20 @@ export default function AdminLoginPage() {
           className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
         >
           <ArrowLeft size={16} />
-          <span>Back to Storefront</span>
+          <span>Back to Consumer App</span>
         </Link>
       </div>
 
       <div className="w-full max-w-md relative z-10 space-y-6">
         {/* Brand & Security Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex size-14 rounded-2xl bg-gradient-to-tr from-orange-600 to-red-600 text-white items-center justify-center shadow-lg shadow-orange-600/30 mb-2">
-            <Flame size={28} className="fill-white" />
+        <div className="text-center space-y-3">
+          <div className="flex justify-center mb-1">
+            <img src={logoBanner} alt="JashoreBro" className="h-12 w-auto object-contain" />
           </div>
 
           <div className="flex items-center justify-center gap-2">
-            <h1 className="text-2xl font-black text-white tracking-tight">
-              Jashore<span className="text-[var(--color-brand)]">Bro</span>
-            </h1>
             <Badge variant="unlocked" size="sm" className="bg-orange-500/20 text-orange-400 border border-orange-500/30">
-              <Shield size={12} className="text-orange-400" /> Admin
+              <Shield size={12} className="text-orange-400" /> Admin Workspace
             </Badge>
           </div>
 

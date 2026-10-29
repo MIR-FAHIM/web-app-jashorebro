@@ -1,7 +1,7 @@
 import { apiClient } from '@/shared/api/apiClient'
 
 /**
- * Admin Panel & Control Center API Service
+ * Admin Panel & Control Center API Service (Activity-based endpoints)
  */
 export const adminApi = {
   /**
@@ -9,7 +9,7 @@ export const adminApi = {
    */
   async getOverview() {
     try {
-      const res = await apiClient('/admin/overview')
+      const res = await apiClient('/admin/overview/get-overview')
       return res.data
     } catch {
       // Graceful fallback if offline or backend route error
@@ -28,7 +28,7 @@ export const adminApi = {
       if (page > 1) params.append('page', page.toString())
 
       const qs = params.toString() ? `?${params.toString()}` : ''
-      const res = await apiClient(`/admin/users${qs}`)
+      const res = await apiClient(`/admin/users/get-users${qs}`)
       return res
     } catch {
       return { data: [], meta: { total: 0 } }
@@ -46,7 +46,7 @@ export const adminApi = {
       if (page > 1) params.append('page', page.toString())
 
       const qs = params.toString() ? `?${params.toString()}` : ''
-      const res = await apiClient(`/admin/sellers${qs}`)
+      const res = await apiClient(`/admin/sellers/get-sellers${qs}`)
       return res
     } catch {
       return { data: [], meta: { total: 0 } }
@@ -57,7 +57,7 @@ export const adminApi = {
    * Update seller status (e.g. approve, suspend).
    */
   async updateSellerStatus(id, status) {
-    const res = await apiClient(`/admin/sellers/${id}/status`, {
+    const res = await apiClient(`/admin/sellers/update-seller-status/${id}`, {
       method: 'PATCH',
       data: { status },
     })
@@ -65,10 +65,10 @@ export const adminApi = {
   },
 
   /**
-   * Update product status or drop readiness.
+   * Update product moderation status or drop readiness.
    */
   async updateProduct(id, payload) {
-    const res = await apiClient(`/admin/products/${id}`, {
+    const res = await apiClient(`/admin/products/update-product-moderation/${id}`, {
       method: 'PATCH',
       data: payload,
     })

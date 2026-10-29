@@ -1,13 +1,16 @@
-import { useId } from 'react'
+import { forwardRef, useId } from 'react'
 import { cn } from '../lib/cn'
 
-export function Input({
-  label,
-  error,
-  className,
-  id,
-  ...props
-}) {
+export const Input = forwardRef(function Input(
+  {
+    label,
+    error,
+    className,
+    id,
+    ...props
+  },
+  ref
+) {
   const generatedId = useId()
   const inputId = id || props.name || generatedId
   const errorId = `${inputId}-error`
@@ -20,6 +23,7 @@ export function Input({
         </label>
       )}
       <input
+        ref={ref}
         id={inputId}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? errorId : undefined}
@@ -33,4 +37,4 @@ export function Input({
       {error && <span id={errorId} className="text-sm text-danger">{error}</span>}
     </div>
   )
-}
+})

@@ -3,7 +3,7 @@ import { UserCheck, UserPlus, Clock, X, Check, MoreHorizontal } from 'lucide-rea
 import { Button } from '@/shared/ui/Button'
 import { useFriends } from '../model/friendsContext'
 import { useAuth } from '@/features/auth/model/authContext'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 export function FriendActionButton({
   userId,
@@ -17,6 +17,7 @@ export function FriendActionButton({
   const { isAuthenticated } = useAuth()
   const { sendRequest, acceptRequest, declineRequest, cancelRequest, unfriend } = useFriends()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [status, setStatus] = useState(initialStatus)
   const [friendshipId, setFriendshipId] = useState(initialFriendshipId)
@@ -29,7 +30,7 @@ export function FriendActionButton({
 
   const handleAction = async (actionType) => {
     if (!isAuthenticated) {
-      navigate('/login')
+      navigate('/auth', { state: { from: location } })
       return
     }
 
@@ -91,7 +92,7 @@ export function FriendActionButton({
           <button
             type="button"
             onClick={() => setShowConfirmUnfriend(false)}
-            className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
+            className="p-1 rounded-lg hover:bg-elevated text-slate-400 hover:text-white cursor-pointer"
             title="Keep Friend"
           >
             <X size={15} />
@@ -105,10 +106,10 @@ export function FriendActionButton({
         <Button
           variant="secondary"
           size={size}
-          className={`bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 text-xs font-semibold gap-1.5 min-h-9 ${className}`}
+          className={`bg-elevated text-slate-200 hover:bg-line border border-line text-xs font-semibold gap-1.5 min-h-9 ${className}`}
           onClick={() => setShowConfirmUnfriend(true)}
         >
-          <UserCheck size={14} className="text-emerald-600" />
+          <UserCheck size={14} className="text-emerald-400" />
           <span>Friends</span>
           <MoreHorizontal size={13} className="text-slate-400 ml-0.5" />
         </Button>
@@ -124,7 +125,7 @@ export function FriendActionButton({
         size={size}
         isLoading={isLoading}
         onClick={() => handleAction('cancel')}
-        className={`text-slate-600 border-slate-200 hover:border-red-200 hover:bg-red-50 hover:text-red-600 text-xs gap-1.5 min-h-9 group transition-colors ${className}`}
+        className={`text-slate-300 border-line hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-400 text-xs gap-1.5 min-h-9 group transition-colors ${className}`}
         title="Click to cancel friend request"
       >
         <Clock size={14} className="group-hover:hidden text-amber-500" />
@@ -154,7 +155,7 @@ export function FriendActionButton({
           size={size}
           disabled={isLoading}
           onClick={() => handleAction('decline')}
-          className="text-xs px-2.5 min-h-9 text-slate-500 hover:text-red-600"
+          className="text-xs px-2.5 min-h-9 text-slate-400 hover:text-red-400 hover:border-red-500/40"
           title="Decline request"
         >
           <X size={14} />

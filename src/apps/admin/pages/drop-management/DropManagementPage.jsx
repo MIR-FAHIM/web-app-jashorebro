@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Flame,
   Plus,
@@ -19,23 +19,35 @@ import { Button } from '@/shared/ui/Button'
 import { Dialog } from '@/shared/ui/Dialog'
 import { formatCurrency } from '@/shared/lib/formatCurrency'
 import { adminCatalogApi } from '@/apps/admin/api/adminCatalogApi'
+import { formatDropDeadline } from '@/features/drops/model/dropLifecycle'
 
 export default function DropManagementPage() {
   const [drops, setDrops] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('All')
+  const [page, setPage] = useState(1)
+  const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 })
+  const listRequest = useRef(0)
+  const detailRequest = useRef(0)
+  const creating = useRef(false)
+  const cancellingRef = useRef(false)
   const [selectedDrop, setSelectedDrop] = useState(null)
   const [selectedDropDetails, setSelectedDropDetails] = useState(null)
   const [loadingDetails, setLoadingDetails] = useState(false)
+  const [detailError, setDetailError] = useState('')
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
+  const [cancelError, setCancelError] = useState('')
 
   // Product list for selecting when launching a drop
   const [productsList, setProductsList] = useState([])
   const [loadingProducts, setLoadingProducts] = useState(false)
+  const [productsError, setProductsError] = useState('')
+  const [productsRetry, setProductsRetry] = useState(0)
+  const [productsQuery, setProductsQuery] = useState('')
 
   // New drop form state
   const [formData, setFormData] = useState({
@@ -50,36 +62,44 @@ export default function DropManagementPage() {
   const [formError, setFormError] = useState('')
 
   const fetchDrops = useCallback(async () => {
+    const requestId = ++listRequest.current
     setLoading(true)
     setError(null)
     try {
-      const statusParam = activeTab === 'All' ? 'all' : activeTab.toLowerCase()
-      const res = await adminCatalogApi.getDropCampaigns({ status: statusParam })
+      const statusParam = activeTab === 'All' ? 'all' : activeTab === 'Expired' ? 'failed' : activeTab.toLowerCase()
+      const res = await adminCatalogApi.getDropCampaigns({ status: statusParam, page })
+      if (listRequest.current !== requestId) return
       setDrops(res.data || [])
+      setMeta(res.meta || { current_page: page, last_page: page, total: res.data?.length || 0 })
     } catch (err) {
-      setError(err?.message || 'Failed to load drop campaigns.')
+      if (listRequest.current === requestId) setError(err?.message || 'Failed to load drop campaigns.')
     } finally {
-      setLoading(false)
+      if (listRequest.current === requestId) setLoading(false)
     }
-  }, [activeTab])
+  }, [activeTab, page])
 
   useEffect(() => {
     fetchDrops()
+    return () => { listRequest.current += 1 }
   }, [fetchDrops])
 
   // Load products lookup when create dialog opens
   useEffect(() => {
+    let active = true
     if (isCreateOpen) {
       setLoadingProducts(true)
+      setProductsError('')
       adminCatalogApi
-        .getProducts({ per_page: 100 })
+        .getProducts({ per_page: 100, q: productsQuery, status: 'published', is_group_buy_enabled: true })
         .then((res) => {
+          if (!active) return
           setProductsList(res.data || [])
         })
-        .catch(() => {})
-        .finally(() => setLoadingProducts(false))
+        .catch((failure) => { if (active) setProductsError(failure.message || 'Unable to load eligible products.') })
+        .finally(() => { if (active) setLoadingProducts(false) })
     }
-  }, [isCreateOpen])
+    return () => { active = false }
+  }, [isCreateOpen, productsRetry, productsQuery])
 
   // When selected product changes in form, prefill title and base price
   const handleProductSelect = (e) => {
@@ -90,7 +110,7 @@ export default function DropManagementPage() {
         ...prev,
         product_id: prodId,
         title: prev.title || `${found.title} - Jashore Volume Drop`,
-        group_price: prev.group_price || Math.round(Number(found.base_price || 0) * 0.85),
+        group_price: '',
       }))
     } else {
       setFormData((prev) => ({ ...prev, product_id: prodId }))
@@ -99,27 +119,34 @@ export default function DropManagementPage() {
 
   // Load full details when inspecting a drop
   const handleInspectDrop = async (drop) => {
+    const requestId = ++detailRequest.current
     setSelectedDrop(drop)
+    setSelectedDropDetails(null)
+    setDetailError('')
     setLoadingDetails(true)
     setCancelReason('')
+    setCancelError('')
     try {
       const details = await adminCatalogApi.getDropCampaign(drop.id)
+      if (detailRequest.current !== requestId) return
       setSelectedDropDetails(details)
-    } catch {
-      setSelectedDropDetails(drop)
+    } catch (failure) {
+      if (detailRequest.current === requestId) setDetailError(failure.message || 'Unable to load the campaign breakdown.')
     } finally {
-      setLoadingDetails(false)
+      if (detailRequest.current === requestId) setLoadingDetails(false)
     }
   }
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault()
+    if (creating.current) return
     setFormError('')
     if (!formData.product_id) {
       setFormError('Please select a product for this volume drop.')
       return
     }
 
+    creating.current = true
     setSubmitting(true)
     try {
       const startDate = new Date()
@@ -135,8 +162,8 @@ export default function DropManagementPage() {
         quantity_limit_per_customer: formData.quantity_limit_per_customer
           ? Number(formData.quantity_limit_per_customer)
           : 2,
-        start_at: startDate.toISOString().slice(0, 19).replace('T', ' '),
-        end_at: endDate.toISOString().slice(0, 19).replace('T', ' '),
+        start_at: startDate.toISOString(),
+        end_at: endDate.toISOString(),
         status: 'active',
       }
 
@@ -155,24 +182,32 @@ export default function DropManagementPage() {
     } catch (err) {
       setFormError(err?.message || 'Failed to launch drop campaign.')
     } finally {
+      creating.current = false
       setSubmitting(false)
     }
   }
 
   const handleCloseEarly = async (id) => {
-    if (!window.confirm('Are you sure you want to conclude or cancel this drop early? Customer reservations will be released.')) {
+    if (cancellingRef.current || !selectedDropDetails || loadingDetails || detailError) return
+    if (!cancelReason.trim()) {
+      setCancelError('Enter a cancellation reason before cancelling this Drop.')
+      return
+    }
+    if (!window.confirm('Cancel this active Drop? Its conditional orders will be cancelled and stock released. Any received payment needs separate manual refund review.')) {
       return
     }
 
+    cancellingRef.current = true
     setCancelling(true)
     try {
-      await adminCatalogApi.cancelDropCampaign(id, cancelReason || 'Concluded early by administrator')
+      await adminCatalogApi.cancelDropCampaign(id, cancelReason.trim())
       setSelectedDrop(null)
       setSelectedDropDetails(null)
       fetchDrops()
     } catch (err) {
-      alert(err?.message || 'Failed to cancel drop campaign.')
+      setCancelError(err?.message || 'Failed to cancel drop campaign.')
     } finally {
+      cancellingRef.current = false
       setCancelling(false)
     }
   }
@@ -222,7 +257,7 @@ export default function DropManagementPage() {
             Volume Drops Management
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-slate-400 max-w-2xl">
-            Control dynamic price-curve campaigns, participant quotas, and unlocking tiers across Jashore merchants.
+            Manage conditional prices, qualifying buyer targets, deadlines and order reservations.
           </p>
         </div>
 
@@ -249,13 +284,13 @@ export default function DropManagementPage() {
       </div>
 
       {/* Tabs & Filter Bar */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-        {['All', 'Active', 'Succeeded', 'Cancelled', 'Draft'].map((tab) => (
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-3">
+        {['All', 'Active', 'Succeeded', 'Expired', 'Cancelled', 'Draft'].map((tab) => (
           <button
             key={tab}
             type="button"
-            onClick={() => setActiveTab(tab)}
-            className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+            onClick={() => { setPage(1); setActiveTab(tab) }}
+            className={`min-h-11 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
               activeTab === tab
                 ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
                 : 'text-slate-400 hover:bg-slate-800 hover:text-white'
@@ -310,9 +345,10 @@ export default function DropManagementPage() {
                 </tr>
               ) : (
                 drops.map((row) => {
-                  const participants = row.distinct_participants_count ?? 0
-                  const target = row.target_participants ?? 10
+                  const participants = row.qualifying_participants_count ?? row.distinct_participants_count ?? 0
+                  const target = row.target_participants ?? 0
                   const pct = row.progress_percent ?? Math.min(100, Math.round((participants / target) * 100))
+                  const regularPrice = Number(row.variant?.price_override ?? row.product?.base_price)
 
                   return (
                     <tr key={row.id} className="hover:bg-slate-800/40 transition-colors">
@@ -330,16 +366,16 @@ export default function DropManagementPage() {
                         <span className="font-bold text-emerald-400 text-sm">
                           {formatCurrency(row.group_price)}
                         </span>
-                        {row.product?.base_price && (
+                        {regularPrice > Number(row.group_price) && (
                           <p className="text-[10px] text-slate-500 line-through">
-                            {formatCurrency(row.product.base_price)}
+                            {formatCurrency(regularPrice)}
                           </p>
                         )}
                       </td>
 
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-between text-[11px] text-slate-300 mb-1">
-                          <span>{participants} joined</span>
+                          <span>{participants} qualifying buyers</span>
                           <span className="font-semibold text-orange-400">{pct}%</span>
                         </div>
                         <div className="h-1.5 w-28 rounded-full bg-slate-800 overflow-hidden">
@@ -352,13 +388,13 @@ export default function DropManagementPage() {
 
                       <td className="px-5 py-4">
                         <div className="text-slate-300 font-medium">
-                          {row.remaining_needed > 0 ? (
+                          {Number(target) > Number(participants) ? (
                             <span className="text-orange-400 font-bold">
-                              {row.remaining_needed} more needed
+                              {Math.max(0, Number(target) - Number(participants))} more needed
                             </span>
                           ) : (
                             <span className="text-emerald-400 font-bold flex items-center gap-1">
-                              <CheckCircle2 size={13} /> Target Reached
+                              {row.status === 'succeeded' ? <><CheckCircle2 size={13} /> Target Reached</> : 'No additional buyers needed'}
                             </span>
                           )}
                           <p className="text-[10px] text-slate-500 mt-0.5">
@@ -371,7 +407,7 @@ export default function DropManagementPage() {
                         {row.end_at ? (
                           <div className="flex items-center gap-1">
                             <Clock size={12} className="text-orange-400" />
-                            <span>{new Date(row.end_at).toLocaleDateString()}</span>
+                            <span>{formatDropDeadline(row.end_at)} · BD time</span>
                           </div>
                         ) : (
                           'Open-ended'
@@ -387,6 +423,7 @@ export default function DropManagementPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleInspectDrop(row)}
+                          aria-label={`Inspect ${row.title}`}
                           className="text-slate-400 hover:text-white hover:bg-slate-800"
                         >
                           <ArrowUpRight size={16} />
@@ -400,11 +437,14 @@ export default function DropManagementPage() {
           </table>
         </div>
       </Card>
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400"><span>Page {meta.current_page} of {meta.last_page} · {meta.total} campaigns</span><div className="flex gap-2"><Button variant="outline" size="sm" disabled={loading || page <= 1} onClick={() => setPage((value) => value - 1)}>Previous page</Button><Button variant="outline" size="sm" disabled={loading || page >= Number(meta.last_page)} onClick={() => setPage((value) => value + 1)}>Next page</Button></div></div>
 
       {/* Inspect Drop Details Dialog */}
       <Dialog
         isOpen={Boolean(selectedDrop)}
         onClose={() => {
+          if (cancellingRef.current) return
+          detailRequest.current += 1
           setSelectedDrop(null)
           setSelectedDropDetails(null)
         }}
@@ -418,7 +458,7 @@ export default function DropManagementPage() {
                 <Loader2 size={24} className="mx-auto animate-spin text-orange-500 mb-2" />
                 <span>Loading campaign breakdown...</span>
               </div>
-            ) : (
+            ) : detailError ? <div role="alert" className="space-y-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-400"><p>{detailError}</p><Button variant="outline" size="sm" onClick={() => handleInspectDrop(selectedDrop)}>Retry campaign details</Button></div> : (
               <>
                 <div className="grid grid-cols-2 gap-3 bg-slate-950/80 p-3.5 rounded-xl border border-slate-800">
                   <div>
@@ -450,7 +490,7 @@ export default function DropManagementPage() {
                 <div>
                   <h4 className="text-xs font-bold text-white mb-2 flex items-center gap-1.5">
                     <Users size={14} className="text-orange-400" />
-                    <span>Committed Participants</span>
+                    <span>Interest and order records</span>
                   </h4>
 
                   {selectedDropDetails?.participants && selectedDropDetails.participants.length > 0 ? (
@@ -481,26 +521,32 @@ export default function DropManagementPage() {
                     </div>
                   ) : (
                     <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-center text-slate-400 text-[11px]">
-                      No customers have joined this drop campaign yet.
+                      No interest or order participation records yet.
                     </div>
                   )}
                 </div>
 
                 {/* Action Controls */}
-                {selectedDrop.status === 'active' && (
+                {selectedDropDetails?.status === 'active' && (
                   <div className="pt-3 border-t border-slate-800 space-y-2">
+                    <p className="text-xs leading-relaxed text-slate-400">Cancelling before success cancels conditional orders and releases stock. Received payments need separate manual refund review.</p>
+                    {cancelError && <p role="alert" className="text-xs text-red-400">{cancelError}</p>}
+                    <label htmlFor="drop-cancel-reason" className="block text-xs text-slate-300">Cancellation reason (required)</label>
                     <input
+                      id="drop-cancel-reason"
                       type="text"
-                      placeholder="Reason for ending drop early (optional)..."
+                      placeholder="Explain why this Drop is being cancelled"
                       value={cancelReason}
-                      onChange={(e) => setCancelReason(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:border-brand focus:outline-none"
+                      onChange={(e) => { setCancelReason(e.target.value); setCancelError('') }}
+                      disabled={cancelling}
+                      maxLength={500}
+                      className="min-h-11 w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:border-brand focus:outline-none"
                     />
 
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={cancelling}
+                      disabled={cancelling || !cancelReason.trim()}
                       onClick={() => handleCloseEarly(selectedDrop.id)}
                       className="w-full text-red-400 border-red-500/30 hover:bg-red-500/10 font-bold"
                     >
@@ -509,7 +555,7 @@ export default function DropManagementPage() {
                       ) : (
                         <AlertTriangle size={15} />
                       )}
-                      <span>Lock & Conclude Drop Early</span>
+                      <span>Cancel Drop and conditional reservations</span>
                     </Button>
                   </div>
                 )}
@@ -522,11 +568,12 @@ export default function DropManagementPage() {
       {/* Launch New Drop Dialog */}
       <Dialog
         isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
+        onClose={() => { if (!creating.current) setIsCreateOpen(false) }}
         title="Launch New Volume Drop"
-        description="Select a catalog product and set target customer quotas to catalyze group purchasing in Jashore."
+        description="Set one conditional price and a distinct-customer target. Success closes new orders. Before success, expiry or cancellation releases reservations; payments require separate manual refund review."
       >
         <form onSubmit={handleCreateSubmit} className="space-y-3.5 pt-2 text-xs">
+          <fieldset disabled={submitting} className="m-0 min-w-0 space-y-3.5 border-0 p-0 [&_input]:min-h-11 [&_select]:min-h-11"><legend className="sr-only">New Drop campaign</legend>
           {formError && (
             <div className="p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400">
               {formError}
@@ -534,18 +581,21 @@ export default function DropManagementPage() {
           )}
 
           <div>
-            <label className="block text-slate-300 font-semibold mb-1">Select Catalog Product</label>
+            <label htmlFor="drop-product-query" className="block text-slate-300 font-semibold mb-1">Find eligible catalog products</label>
+            <input id="drop-product-query" value={productsQuery} onChange={(event) => setProductsQuery(event.target.value)} placeholder="Search product title" className="mb-3 min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 text-white placeholder:text-slate-500" />
+            <label htmlFor="drop-product-id" className="block text-slate-300 font-semibold mb-1">Select Catalog Product</label>
             {loadingProducts ? (
               <div className="py-2 text-slate-400 flex items-center gap-2">
                 <Loader2 size={14} className="animate-spin text-orange-500" />
                 <span>Loading products...</span>
               </div>
-            ) : (
+            ) : productsError ? <div role="alert" className="space-y-2 text-red-400"><p>{productsError}</p><Button type="button" variant="outline" size="sm" onClick={() => setProductsRetry((value) => value + 1)}>Retry eligible products</Button></div> : (
               <select
+                id="drop-product-id"
                 required
                 value={formData.product_id}
                 onChange={handleProductSelect}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-brand focus:outline-none"
+                className="min-h-11 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-brand focus:outline-none"
               >
                 <option value="">-- Choose a product to launch --</option>
                 {productsList.map((p) => (
@@ -555,11 +605,13 @@ export default function DropManagementPage() {
                 ))}
               </select>
             )}
+            {!loadingProducts && !productsError && productsList.length === 0 && <p className="mt-2 text-slate-400">No eligible products match this search.</p>}
           </div>
 
           <div>
-            <label className="block text-slate-300 font-semibold mb-1">Campaign Title</label>
+            <label htmlFor="drop-campaign-title" className="block text-slate-300 font-semibold mb-1">Campaign Title</label>
             <input
+              id="drop-campaign-title"
               type="text"
               required
               placeholder="e.g. Handmade Keshabpur Clay Tea Set Volume Drop"
@@ -571,10 +623,12 @@ export default function DropManagementPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Drop Group Price (BDT)</label>
+              <label htmlFor="drop-group-price" className="block text-slate-300 font-semibold mb-1">Conditional Drop Price (BDT)</label>
               <input
+                id="drop-group-price"
                 type="number"
                 step="0.01"
+                min="0.01"
                 required
                 placeholder="999"
                 value={formData.group_price}
@@ -583,8 +637,9 @@ export default function DropManagementPage() {
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Duration (Days)</label>
+              <label htmlFor="drop-duration" className="block text-slate-300 font-semibold mb-1">Duration (Days)</label>
               <input
+                id="drop-duration"
                 type="number"
                 required
                 min="1"
@@ -600,10 +655,11 @@ export default function DropManagementPage() {
             <p className="font-bold text-orange-400">Target Unlocking Rules</p>
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-slate-400 text-[11px] mb-1">
+                <label htmlFor="drop-target" className="block text-slate-400 text-[11px] mb-1">
                   Target Distinct Buyers
                 </label>
                 <input
+                  id="drop-target"
                   type="number"
                   min="2"
                   required
@@ -614,10 +670,11 @@ export default function DropManagementPage() {
                 />
               </div>
               <div>
-                <label className="block text-slate-400 text-[11px] mb-1">
+                <label htmlFor="drop-customer-limit" className="block text-slate-400 text-[11px] mb-1">
                   Max Limit Per Customer
                 </label>
                 <input
+                  id="drop-customer-limit"
                   type="number"
                   min="1"
                   placeholder="e.g. 2"
@@ -642,7 +699,7 @@ export default function DropManagementPage() {
               type="submit"
               variant="drop-fire"
               size="sm"
-              disabled={submitting}
+              disabled={submitting || loadingProducts || Boolean(productsError)}
               className="font-bold bg-gradient-to-r from-orange-500 to-red-600 text-white"
             >
               {submitting ? (
@@ -655,6 +712,7 @@ export default function DropManagementPage() {
               )}
             </Button>
           </div>
+          </fieldset>
         </form>
       </Dialog>
     </div>

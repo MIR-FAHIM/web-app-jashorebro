@@ -98,12 +98,12 @@ export default function AdminDashboardPage() {
       action: () => navigate('/admin/sellers'),
     },
     {
-      title: 'Gross Merchandising Value',
-      value: formatCurrency(counts.estimated_gmv || 284500),
-      note: 'Preserved order settlement value',
+      title: 'Settlement report',
+      value: 'View verified totals',
+      note: 'Paid, delivered orders and earnings balances',
       icon: DollarSign,
       tone: 'text-amber-400 bg-amber-500/15 border border-amber-500/30',
-      action: () => navigate('/admin/orders'),
+      action: () => navigate('/admin/settlement'),
     },
   ]
 
@@ -300,15 +300,15 @@ export default function AdminDashboardPage() {
 
               <button
                 type="button"
-                onClick={() => navigate('/admin/rewards')}
+                onClick={() => navigate('/admin/payouts')}
                 className="flex min-h-11 w-full items-center justify-between rounded-xl bg-slate-800/80 px-3.5 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors border border-slate-700/50"
               >
                 <div className="flex items-center gap-2">
                   <DollarSign size={15} className="text-amber-400" />
-                  <span>Curator Payouts</span>
+                  <span>Payout requests</span>
                 </div>
                 <span className="text-[11px] text-amber-400 font-bold">
-                  {formatCurrency(counts.pending_rewards || 14200)}
+                  Review requests
                 </span>
               </button>
 

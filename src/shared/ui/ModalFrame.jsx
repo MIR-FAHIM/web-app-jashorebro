@@ -2,29 +2,43 @@ import { useEffect, useId, useRef } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '../lib/cn'
 
-export function ModalFrame({ isOpen, onClose, title, description, children, className, sheet = false }) {
+export function ModalFrame({ isOpen, onClose, title, description, children, className, sheet = false, closeLabel = 'Close dialog' }) {
   const panelRef = useRef(null)
   const titleId = useId()
   const descriptionId = useId()
+
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
 
   useEffect(() => {
     if (!isOpen) return
     const previousFocus = document.activeElement
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+
     const panel = panelRef.current
-    panel?.focus()
+    if (panel && !panel.contains(document.activeElement)) {
+      panel.focus()
+    }
+
     const handleKey = (event) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') {
+        onCloseRef.current?.()
+        return
+      }
       if (event.key !== 'Tab') return
-      const elements = [...panel.querySelectorAll('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]')].filter((element) => element.getClientRects().length)
+      const currentPanel = panelRef.current
+      if (!currentPanel) return
+      const elements = [...currentPanel.querySelectorAll('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]')].filter((element) => element.getClientRects().length)
       const first = elements[0]
       const last = elements.at(-1)
       if (!first) { event.preventDefault(); return }
-      if (event.shiftKey && (document.activeElement === first || document.activeElement === panel)) {
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === currentPanel)) {
         event.preventDefault()
         last.focus()
-      } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === panel)) {
+      } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === currentPanel)) {
         event.preventDefault()
         first.focus()
       }
@@ -35,7 +49,7 @@ export function ModalFrame({ isOpen, onClose, title, description, children, clas
       document.removeEventListener('keydown', handleKey)
       if (previousFocus?.isConnected) previousFocus.focus()
     }
-  }, [isOpen, onClose])
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -50,7 +64,7 @@ export function ModalFrame({ isOpen, onClose, title, description, children, clas
             {title && <h2 id={titleId} className="text-lg font-semibold text-ink">{title}</h2>}
             {description && <p id={descriptionId} className="mt-1 text-sm text-muted">{description}</p>}
           </div>
-          <button type="button" onClick={onClose} aria-label="Close dialog" className="flex size-11 shrink-0 items-center justify-center rounded-xl text-muted hover:bg-line hover:text-ink"><X size={20} /></button>
+          <button type="button" onClick={onClose} aria-label={closeLabel} className="flex size-11 shrink-0 items-center justify-center rounded-xl text-muted hover:bg-line hover:text-ink"><X size={20} /></button>
         </div>
         {children}
       </div>

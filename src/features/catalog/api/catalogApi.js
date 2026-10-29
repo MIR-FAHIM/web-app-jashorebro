@@ -1,14 +1,14 @@
 import { apiClient } from '@/shared/api/apiClient'
 
 /**
- * Merchants & Product Catalog API Service
+ * Merchants & Product Catalog API Service (Activity-based endpoints)
  */
 export const catalogApi = {
   /**
    * Fetch all active categories with product counts.
    */
   async getCategories() {
-    const res = await apiClient('/categories')
+    const res = await apiClient('/categories/get-categories')
     return res.data || []
   },
 
@@ -16,7 +16,7 @@ export const catalogApi = {
    * Fetch single category by slug.
    */
   async getCategory(slug) {
-    const res = await apiClient(`/categories/${encodeURIComponent(slug)}`)
+    const res = await apiClient(`/categories/get-category/${encodeURIComponent(slug)}`)
     return res.data
   },
 
@@ -48,7 +48,7 @@ export const catalogApi = {
     if (per_page !== 20) params.append('per_page', per_page.toString())
 
     const qs = params.toString() ? `?${params.toString()}` : ''
-    const res = await apiClient(`/products${qs}`)
+    const res = await apiClient(`/products/get-products${qs}`)
     return res
   },
 
@@ -56,15 +56,34 @@ export const catalogApi = {
    * Fetch single product details with seller, gallery, and variants.
    */
   async getProduct(slug) {
-    const res = await apiClient(`/products/${encodeURIComponent(slug)}`)
+    const res = await apiClient(`/products/get-product/${encodeURIComponent(slug)}`)
     return res.data
+  },
+
+  /**
+   * Fetch confirmed friends who picked this product.
+   */
+  async getFriendsWhoPicked(productId, { all = false } = {}) {
+    const friends = new Map()
+    let page = 1
+    let lastPage = 1
+    do {
+      const params = new URLSearchParams({ page: String(page), per_page: '50' })
+      const res = await apiClient(`/products/${encodeURIComponent(productId)}/picked-by-friends?${params}`)
+      const rows = res.data || res.friends || []
+      if (!Array.isArray(rows)) throw new Error('Invalid friends response')
+      rows.forEach((friend) => friends.set(friend.id, friend))
+      lastPage = Number(res.meta?.last_page || 1)
+      page += 1
+    } while (all && page <= lastPage)
+    return [...friends.values()]
   },
 
   /**
    * Fetch curated featured and drop-ready products.
    */
   async getFeaturedProducts() {
-    const res = await apiClient('/products/featured')
+    const res = await apiClient('/products/get-featured-products')
     return res.data || []
   },
 
@@ -77,7 +96,7 @@ export const catalogApi = {
     if (page > 1) params.append('page', page.toString())
 
     const qs = params.toString() ? `?${params.toString()}` : ''
-    const res = await apiClient(`/sellers${qs}`)
+    const res = await apiClient(`/sellers/get-sellers${qs}`)
     return res
   },
 
@@ -85,7 +104,7 @@ export const catalogApi = {
    * Single seller storefront with their products.
    */
   async getSeller(slug) {
-    const res = await apiClient(`/sellers/${encodeURIComponent(slug)}`)
+    const res = await apiClient(`/sellers/get-seller/${encodeURIComponent(slug)}`)
     return res.data
   },
 
@@ -93,7 +112,7 @@ export const catalogApi = {
    * Apply to become a merchant.
    */
   async applySeller(formData) {
-    const res = await apiClient('/sellers/apply', {
+    const res = await apiClient('/sellers/apply-seller', {
       method: 'POST',
       data: formData,
     })

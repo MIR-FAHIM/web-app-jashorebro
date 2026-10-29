@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Phone, Lock, User, AtSign, Flame, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Phone, Lock, User, AtSign, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react'
+import logoBanner from '@/assets/jashorebrobannerlogo.png'
 import { Card } from '@/shared/ui/Card'
 import { Input } from '@/shared/ui/Input'
 import { Button } from '@/shared/ui/Button'
@@ -37,7 +38,8 @@ export function AuthScreen({ onSuccess }) {
   const [otpPurpose, setOtpPurpose] = useState('phone_verification')
   const [otpSuccessMsg, setOtpSuccessMsg] = useState('')
 
-  const redirectPath = location.state?.from?.pathname || '/'
+  const returnLocation = location.state?.from
+  const redirectPath = `${returnLocation?.pathname || '/'}${returnLocation?.search || ''}${returnLocation?.hash || ''}`
 
   const handleFinish = () => {
     if (onSuccess) {
@@ -129,13 +131,10 @@ export function AuthScreen({ onSuccess }) {
     <div className="w-full max-w-md mx-auto py-6 px-4">
       {/* Brand Icon & Welcome */}
       <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-600 to-red-500 text-white shadow-lg shadow-orange-500/25 mb-3">
-          <Flame size={28} className="fill-white" />
+        <div className="flex justify-center mb-3">
+          <img src={logoBanner} alt="JashoreBro" className="h-12 w-auto object-contain" />
         </div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-          Jashore<span className="text-[var(--color-brand)]">Bro</span>
-        </h1>
-        <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+        <p className="text-xs text-soft mt-1 max-w-xs mx-auto">
           Community drops, collective discounts, and curated taste.
         </p>
       </div>

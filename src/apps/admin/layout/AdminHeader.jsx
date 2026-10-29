@@ -1,6 +1,7 @@
 import { Menu, ArrowUpRight, LogOut, CheckCircle2 } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Avatar } from '@/shared/ui/Avatar'
+import { NotificationBell } from '@/shared/ui/NotificationBell'
 import { useAuth } from '@/features/auth/model/authContext'
 
 const sectionTitles = {
@@ -12,6 +13,8 @@ const sectionTitles = {
   '/admin/users': 'Users & Curators',
   '/admin/rewards': 'Wallets & Rewards',
   '/admin/moderation': 'Review & Flags',
+  '/admin/logs': 'Activity & Audit Logs',
+  '/admin/notifications': 'System Notifications',
 }
 
 export function AdminHeader({ onOpenSidebar }) {
@@ -63,11 +66,18 @@ export function AdminHeader({ onOpenSidebar }) {
           target="_blank"
           rel="noreferrer"
           className="flex min-h-9 items-center gap-1.5 rounded-xl border border-slate-700/60 bg-slate-800/80 px-3 text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
-          title="Open customer storefront in new tab"
+          title="Open consumer app in new tab"
         >
-          <span className="hidden sm:inline">Storefront</span>
+          <span className="hidden sm:inline">Consumer App</span>
           <ArrowUpRight size={15} />
         </Link>
+
+        {/* In-App Notifications Bell */}
+        <NotificationBell
+          context="admin"
+          viewAllUrl="/admin/notifications"
+          theme="dark"
+        />
 
         {/* User profile capsule */}
         <div className="flex items-center gap-2.5 border-l border-slate-800 pl-2.5 sm:pl-4">
